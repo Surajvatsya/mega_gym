@@ -6,7 +6,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 
-// user signup
 router.post('/signup',(req,res,next)=>{
   console.log(req.body);
   bcrypt.hash(req.body.password,10,(err,hash)=>{
@@ -21,15 +20,16 @@ router.post('/signup',(req,res,next)=>{
     {
         const user = new User({
         _id:new mongoose.Types.ObjectId,
-        firtName:req.body.firstName,
-        lastName:req.body.lastName,
+        userName:req.body.userName,
         password:hash,
         email:req.body.email,
         phone:req.body.phone,
         address:req.body.address,
-        city:req.body.city,
-        state:req.body.state,
-        pin:req.body.pin
+        age:req.body.age,
+        gender:req.body.gender,
+        bloodGroup:req.body.bloodGroup,
+        currentBeginDate:req.body.currentBeginDate,
+        currentFinishDate:req.body.currentFinishDate
       })
 
       user.save()
@@ -49,10 +49,10 @@ router.post('/signup',(req,res,next)=>{
 })
 
 
-// user login
+
 router.post('/login',(req,res,next)=>{
   console.log(req.body);
-  User.find({username:req.body.username})
+  User.find({userName:req.body.userName})
   .exec()
   .then(user=>{
     console.log(user);
