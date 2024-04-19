@@ -67,7 +67,7 @@ router.post("/login", (req, res) => {
             },
             process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
             {
-              expiresIn: "24h",
+              expiresIn: null,
             },
           );
           res.status(200).json({
