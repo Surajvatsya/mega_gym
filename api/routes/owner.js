@@ -1,12 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const User = require("../model/user");
+const Owner = require("../model/owner");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-// user signup
-router.post("/signup", (req, res, next) => {
+router.post("/signup", (req, res) => {
   console.log(req.body);
   bcrypt.hash(req.body.password, 10, (err, hash) => {
     if (err) {
@@ -14,19 +13,21 @@ router.post("/signup", (req, res, next) => {
         error: err,
       });
     } else {
-      const user = new User({
+      const owner = new Owner({
         _id: new mongoose.Types.ObjectId(),
-        userName: req.body.userName,
+        ownerName: req.body.ownerName,
         password: hash,
         email: req.body.email,
-        phone: req.body.phone,
+        gymName: req.body.gymName,
+        contact: req.body.contact,
+        address: req.body.address,
       });
 
-      user
+      owner
         .save()
         .then((result) => {
           res.status(200).json({
-            new_user: result,
+            new_owner: result,
           });
         })
         .catch((err) => {
@@ -39,19 +40,17 @@ router.post("/signup", (req, res, next) => {
   });
 });
 
-// user login
-router.post("/login", (req, res, next) => {
+router.post("/login", (req, res) => {
   console.log(req.body);
-  User.find({ userName: req.body.userName })
+  Owner.find({ email: req.body.email })
     .exec()
-    .then((user) => {
-      console.log(user);
-      if (user.length < 1) {
+    .then((owner) => {
+      if (owner.length < 1) {
         return res.status(404).json({
-          msg: "user not found",
+          msg: "Gym Owner not found",
         });
       }
-      bcrypt.compare(req.body.password, user[0].password, (err, result) => {
+      bcrypt.compare(req.body.password, owner[0].password, (err, result) => {
         if (!result) {
           return res.status(401).json({
             msg: "password matching failed",
@@ -60,19 +59,21 @@ router.post("/login", (req, res, next) => {
         if (result) {
           const token = jwt.sign(
             {
-              userName: user[0].username,
-              email: user[0].email,
-              phone: user[0].phone,
+              ownerName: owner[0].ownerName,
+              email: owner[0].email,
+              phone: owner[0].phone,
+              userType: owner[0].userType,
             },
-            "this is demo user api",
+            "this is demo user api", //second parameter is the secret key used to sign the token
             {
               expiresIn: "24h",
             },
           );
           res.status(200).json({
-            userName: user[0].userName,
-            phone: user[0].phone,
-            email: user[0].email,
+            owner: owner[0].ownerName,
+            userType: owner[0].userType,
+            phone: owner[0].phone,
+            email: owner[0].email,
             token: token,
           });
         }
