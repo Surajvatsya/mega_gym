@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const User = require('../model/user');
+const Customer = require('../model/customer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 
-router.post('/signup',(req,res,next)=>{
+router.post('/signup',(req,res)=>{
   console.log(req.body);
   bcrypt.hash(req.body.password,10,(err,hash)=>{
     if(err)
@@ -18,7 +18,7 @@ router.post('/signup',(req,res,next)=>{
 
     else
     {
-        const user = new User({
+        const customer = new Customer({
         _id:new mongoose.Types.ObjectId,
         userName:req.body.userName,
         password:hash,
@@ -32,10 +32,10 @@ router.post('/signup',(req,res,next)=>{
         currentFinishDate:req.body.currentFinishDate
       })
 
-      user.save()
+      customer.save()
       .then(result=>{
         res.status(200).json({
-          new_user : result
+          new_customer : result
         })
       })
       .catch(err=>{
@@ -50,19 +50,20 @@ router.post('/signup',(req,res,next)=>{
 
 
 
-router.post('/login',(req,res,next)=>{
+router.post('/login',(req,res)=>{
   console.log(req.body);
-  User.find({userName:req.body.userName})
+  Customer.find({email:req.body.email})
   .exec()
-  .then(user=>{
-    console.log(user);
-    if(user.length < 1)
+  .then(customer=>{
+    console.log("customerFromDB: " , customer);
+    if(customer.length < 1)
     {
       return res.status(404).json({
         msg:'user not found'
       })
     }
-    bcrypt.compare(req.body.password,user[0].password,(err,result)=>{
+    console.log("req.body.password,customer[0].password",req.body.password,customer[0].password)
+    bcrypt.compare(req.body.password,customer[0].password,(err,result)=>{
       if(!result)
       {
         return res.status(401).json({
@@ -72,21 +73,21 @@ router.post('/login',(req,res,next)=>{
       if(result)
       {
         const token = jwt.sign({
-          username:user[0].username,
-          email:user[0].email,
-          phone:user[0].phone,
-          userType:user[0].userType
+          customerName:customer[0].customerName,
+          email:customer[0].email,
+          phone:customer[0].phone,
+          userType:customer[0].userType
         },
-        'this is demo user api',
+        'this is demo user api', //second parameter is the secret key used to sign the token
         {
           expiresIn:"24h"
         }
         );
         res.status(200).json({
-          user:user[0].username,
-          userType:user[0].userType,
-          phone:user[0].phone,
-          email:user[0].email,
+          customer:customer[0].customerName,
+          userType:customer[0].userType,
+          phone:customer[0].phone,
+          email:customer[0].email,
           token:token
         })
       }

@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const userRoute = require('./api/routes/user');
+const customerRoute = require('./api/routes/customer');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { urlencoded, json } = require('body-parser');
@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 
 app.use(cors());
 
-app.use('/user',userRoute);
+app.use('/customer',customerRoute);
 
 
 module.exports = app;
