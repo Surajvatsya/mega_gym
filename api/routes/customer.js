@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 const Customer = require("../model/customer");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const verifyToken = require("../middleware/jwt");
+require("dotenv").config();
 
 // future usecase
 router.post("/signup", (req, res) => {
@@ -46,7 +47,6 @@ router.post("/signup", (req, res) => {
   });
 });
 
-
 // future usecase
 router.post("/login", (req, res) => {
   console.log(req.body);
@@ -78,7 +78,7 @@ router.post("/login", (req, res) => {
               phone: customer[0].phone,
               userType: customer[0].userType,
             },
-            "this is demo user api", //second parameter is the secret key used to sign the token
+            process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
             {
               expiresIn: "24h",
             },
@@ -101,7 +101,7 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/getCustomers", async (req, res) => {
+router.get("/getCustomers", verifyToken, async (req, res) => {
   try {
     const customers = await Customer.find({});
     res.status(200).json(customers);
@@ -112,7 +112,7 @@ router.get("/getCustomers", async (req, res) => {
   }
 });
 
-router.post("/postCustomer", (req, res) => {
+router.post("/postCustomer", verifyToken, (req, res) => {
   const customer = new Customer({
     _id: new mongoose.Types.ObjectId(),
     customerName: req.body.customerName,
@@ -142,7 +142,7 @@ router.post("/postCustomer", (req, res) => {
     });
 });
 
-router.get("/getCustomerProfile/:customerId", async (req, res) => {
+router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
   try {
     const customerId = req.params.customerId;
     const customer = await Customer.findById(customerId);
@@ -152,7 +152,7 @@ router.get("/getCustomerProfile/:customerId", async (req, res) => {
     res.status(200).json(customer);
   } catch (err) {
     // Handle error
-    console.error("Error:", error);
+    console.error("Error:", err);
     return res.status(500).json({ error: "'Internal Server Error'" });
   }
 });

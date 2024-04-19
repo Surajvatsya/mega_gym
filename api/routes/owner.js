@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const Owner = require("../model/owner");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 router.post("/signup", (req, res) => {
   console.log(req.body);
@@ -64,7 +65,7 @@ router.post("/login", (req, res) => {
               phone: owner[0].phone,
               userType: owner[0].userType,
             },
-            "this is demo user api", //second parameter is the secret key used to sign the token
+            process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
             {
               expiresIn: "24h",
             },

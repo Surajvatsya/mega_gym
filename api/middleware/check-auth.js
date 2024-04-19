@@ -64,7 +64,7 @@ router.post("/login", (req, res, next) => {
               email: user[0].email,
               phone: user[0].phone,
             },
-            "this is demo user api",
+            process.env.JWT_TOKEN,
             {
               expiresIn: "24h",
             },
