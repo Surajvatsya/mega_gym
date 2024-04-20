@@ -5,6 +5,10 @@ const Customer = require("../model/customer");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
+const {
+  convertUtcToLongDateFormat,
+  addValidTillToCurrDate,
+} = require("../utils");
 require("dotenv").config();
 
 // future usecase
@@ -78,9 +82,9 @@ router.post("/login", (req, res) => {
               phone: customer[0].phone,
               userType: customer[0].userType,
             },
-            process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
+            process.env.JWT_TOKEN,
             {
-              expiresIn: null,
+              expiresIn: "10000000000hr",
             },
           );
           res.status(200).json({
@@ -101,13 +105,68 @@ router.post("/login", (req, res) => {
     });
 });
 
+// const homePageRes = (req, res, next) => {
+// res.createHomePageRes = (Customer) =>{
+
+// }
+// };
+
 router.get("/getCustomers", verifyToken, async (req, res) => {
   try {
     const customers = await Customer.find({});
-    res.status(200).json(customers);
+
+    const today = new Date();
+
+    const currentDate = today.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    console.log("currentDate", currentDate);
+    const parseCurrDate = new Date(currentDate);
+    const groupedData = customers.reduce(
+      (acc, customer) => {
+        const parseFinishdate = new Date(customer.currentFinishDate);
+        if (parseFinishdate >= parseCurrDate) {
+          acc.current.push({
+            customerName: customer.customerName,
+            age: customer.age,
+            gender: customer.gender,
+            bloodGroup: customer.bloodGroup,
+            address: customer.address,
+            phone: customer.phone,
+            email: customer.email,
+            currentBeginDate: customer.currentBeginDate,
+            currentFinishDate: customer.currentFinishDate,
+            gymId: customer.gymId,
+            expiring: (parseFinishdate - parseCurrDate) / (1000 * 60 * 60 * 24),
+          });
+        } else {
+          acc.expired.push({
+            customerName: customer.customerName,
+            age: customer.age,
+            gender: customer.gender,
+            bloodGroup: customer.bloodGroup,
+            address: customer.address,
+            phone: customer.phone,
+            email: customer.email,
+            currentBeginDate: customer.currentBeginDate,
+            currentFinishDate: customer.currentFinishDate,
+            gymId: customer.gymId,
+            expired: (parseCurrDate - parseFinishdate) / (1000 * 60 * 60 * 24),
+          });
+        }
+        return acc;
+      },
+      { current: [], expired: [] },
+    );
+
+    res.status(200).json(groupedData);
   } catch (err) {
     // Handle error
-    console.error("Error:", error);
+    console.error("Error:", err);
+    // res.createHomePageRes()
     return res.status(500).json({ error: err });
   }
 });
@@ -123,13 +182,17 @@ router.post("/postCustomer", verifyToken, (req, res) => {
     gender: req.body.gender,
     bloodGroup: req.body.bloodGroup,
     currentBeginDate: req.body.currentBeginDate,
-    currentFinishDate: req.body.currentFinishDate,
+    currentFinishDate: addValidTillToCurrDate(
+      req.body.currentBeginDate,
+      req.body.validTill,
+    ),
     gymId: req.body.gymId,
   });
 
   customer
     .save()
     .then((result) => {
+      // console.log(result.currentFinishDate);
       res.status(200).json({
         new_customer: result,
       });

@@ -9,8 +9,8 @@ customerSchema = mongoose.Schema({
   phone: Number,
   email: String,
   password: String,
-  currentBeginDate: Date,
-  currentFinishDate: Date,
+  currentBeginDate: String,
+  currentFinishDate: String,
   gymId: String,
 });
 
