@@ -11,6 +11,8 @@ const {
 } = require("../utils");
 require("dotenv").config();
 
+const Plan = require("../model/plan");
+
 // future usecase
 router.post("/signup", (req, res) => {
   console.log(req.body);
@@ -167,38 +169,46 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/registerCustomer", verifyToken, (req, res) => {
-  const customer = new Customer({
-    _id: new mongoose.Types.ObjectId(),
-    customerName: req.body.customerName,
-    email: req.body.email,
-    phone: req.body.phone,
-    address: req.body.address,
-    age: req.body.age,
-    gender: req.body.gender,
-    bloodGroup: req.body.bloodGroup,
-    currentBeginDate: req.body.currentBeginDate,
-    currentFinishDate: addValidTillToCurrDate(
-      req.body.currentBeginDate,
-      req.body.validTill,
-    ),
-    gymId: req.body.gymId,
-  });
-
-  customer
-    .save()
-    .then((result) => {
-      // console.log(result.currentFinishDate);
-      res.status(200).json({
-        new_customer: result,
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({
-        error: err,
-      });
+router.post("/registerCustomer", verifyToken, async (req, res) => {
+  try {
+    const customerId = new mongoose.Types.ObjectId();
+    const newPlan = new Plan({
+      _id: new mongoose.Types.ObjectId(),
+      customerId: customerId,
+      duration: req.body.validTill,
+      fee: 3000,
+      discount: 0,
     });
+
+    const customer = new Customer({
+      _id: customerId,
+      customerName: req.body.customerName,
+      email: req.body.email,
+      phone: req.body.phone,
+      address: req.body.address,
+      age: req.body.age,
+      gender: req.body.gender,
+      bloodGroup: req.body.bloodGroup,
+      currentBeginDate: req.body.currentBeginDate,
+      currentFinishDate: addValidTillToCurrDate(
+        req.body.currentBeginDate,
+        req.body.validTill,
+      ),
+      gymId: req.body.gymId,
+    });
+
+    const [planResult, customerResult] = await Promise.all([
+      newPlan.save(),
+      customer.save(),
+    ]);
+
+    res
+      .status(200)
+      .json({ new_plan: planResult, new_customer: customerResult });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
@@ -219,6 +229,16 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
   try {
     const customerId = req.params.customerId;
+    const newPlan = new Plan({
+      _id: new mongoose.Types.ObjectId(),
+      customerId: customerId,
+      duration: req.body.validTill,
+      fee: 3000,
+      discount: 0,
+    });
+
+    const createPlan = await newPlan.save();
+
     let currentFinishDate = addValidTillToCurrDate(
       req.body.currentBeginDate,
       req.body.validTill,
@@ -238,8 +258,9 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
 
     if (!updatedCustomer)
       return res.status(404).json({ message: "Customer not found" });
-
-    res.status(200).json(updatedCustomer);
+    if (!createPlan)
+      return res.status(404).json({ message: "couldn't createPlan" });
+    res.status(200).json({ updatedCustomer, createPlan });
   } catch (error) {
     console.log("Error", error);
     res.status(500).json({ message: "Internal server error" });

@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const Customer = require("../model/customer");
 const verifyToken = require("../middleware/jwt");
+const Plan = require("../model/plan");
 
 router.post("/signup", (req, res) => {
   console.log(req.body);
@@ -101,20 +102,29 @@ router.get("/analysis", verifyToken, async (req, res) => {
     },
   ]);
 
+  let planAnalysis = await Plan.aggregate([
+    {
+      $group: {
+        _id: null, // Group by gender field
+        averageMonth: { $avg: "$duration" }, // Count documents in each group
+        fee: { $sum: "$fee" }, // Count documents in each group
+      },
+    },
+  ]);
+
   if (!numberOfPeople)
     return res.status(404).json({ message: "Customer not found" });
 
   if (!genderRatio)
     return res.status(404).json({ message: "Gender not found" });
+  if (!planAnalysis)
+    return res.status(404).json({ message: "planAnalysis not found" });
 
-  res
-    .status(200)
-    .json({
-      genderRatio,
-      numberOfPeople,
-      earnings: "TO DO",
-      averageMonth: "TO DO",
-    });
+  res.status(200).json({
+    genderRatio,
+    numberOfPeople,
+    planAnalysis,
+  });
 });
 
 module.exports = router;
