@@ -105,12 +105,6 @@ router.post("/login", (req, res) => {
     });
 });
 
-// const homePageRes = (req, res, next) => {
-// res.createHomePageRes = (Customer) =>{
-
-// }
-// };
-
 router.get("/getCustomers", verifyToken, async (req, res) => {
   try {
     const customers = await Customer.find({});
@@ -130,6 +124,7 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
         const parseFinishdate = new Date(customer.currentFinishDate);
         if (parseFinishdate >= parseCurrDate) {
           acc.current.push({
+            id: customer.id,
             customerName: customer.customerName,
             age: customer.age,
             gender: customer.gender,
@@ -144,6 +139,7 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
           });
         } else {
           acc.expired.push({
+            id: customer.id,
             customerName: customer.customerName,
             age: customer.age,
             gender: customer.gender,
@@ -171,7 +167,7 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/postCustomer", verifyToken, (req, res) => {
+router.post("/registerCustomer", verifyToken, (req, res) => {
   const customer = new Customer({
     _id: new mongoose.Types.ObjectId(),
     customerName: req.body.customerName,
@@ -217,6 +213,36 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
     // Handle error
     console.error("Error:", err);
     return res.status(500).json({ error: "'Internal Server Error'" });
+  }
+});
+
+router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
+  try {
+    const customerId = req.params.customerId;
+    let currentFinishDate = addValidTillToCurrDate(
+      req.body.currentBeginDate,
+      req.body.validTill,
+    );
+    let updateFields = {
+      currentBeginDate: req.body.currentBeginDate,
+      currentFinishDate,
+    };
+
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      customerId,
+      updateFields,
+      {
+        new: true,
+      },
+    );
+
+    if (!updatedCustomer)
+      return res.status(404).json({ message: "Customer not found" });
+
+    res.status(200).json(updatedCustomer);
+  } catch (error) {
+    console.log("Error", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

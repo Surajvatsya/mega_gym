@@ -5,6 +5,8 @@ const Owner = require("../model/owner");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const Customer = require("../model/customer");
+const verifyToken = require("../middleware/jwt");
 
 router.post("/signup", (req, res) => {
   console.log(req.body);
@@ -85,6 +87,33 @@ router.post("/login", (req, res) => {
       res.status(500).json({
         error: err,
       });
+    });
+});
+
+router.get("/analysis", verifyToken, async (req, res) => {
+  const numberOfPeople = await Customer.countDocuments();
+  let genderRatio = await Customer.aggregate([
+    {
+      $group: {
+        _id: "$gender", // Group by gender field
+        count: { $sum: 1 }, // Count documents in each group
+      },
+    },
+  ]);
+
+  if (!numberOfPeople)
+    return res.status(404).json({ message: "Customer not found" });
+
+  if (!genderRatio)
+    return res.status(404).json({ message: "Gender not found" });
+
+  res
+    .status(200)
+    .json({
+      genderRatio,
+      numberOfPeople,
+      earnings: "TO DO",
+      averageMonth: "TO DO",
     });
 });
 
