@@ -3,6 +3,7 @@ const app = express();
 const customerRoute = require("./api/routes/customer");
 const ownerRoute = require("./api/routes/owner");
 const messageRoute = require("./api/routes/message");
+const notificationRoute = require("./api/routes/firebase");
 // const planRoute = require("./api/routes/plan");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -29,5 +30,6 @@ app.use(cors());
 app.use("/customer", customerRoute);
 app.use("/owner", ownerRoute);
 app.use("/whatsapp", messageRoute);
+app.use("/notification", notificationRoute);
 
 module.exports = app;
