@@ -5,7 +5,7 @@ ownerSchema = mongoose.Schema({
   email: String,
   password: String,
   gymName: String,
-  contact: Number,
+  contact: String,
   address: String,
   upiId: String,
 });
