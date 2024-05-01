@@ -1,12 +1,24 @@
 const mongoose = require("mongoose");
 ownerSchema = mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
-  ownerName: String,
+  ownerName: {
+    type: String,
+    required: true,
+  },
   email: String,
   password: String,
-  gymName: String,
-  contact: String,
-  address: String,
+  gymName: {
+    type: String,
+    required: true,
+  },
+  contact: {
+    type: String,
+    required: true,
+  },
+  address: {
+    type: String,
+    required: true,
+  },
   upiId: String,
 });
 

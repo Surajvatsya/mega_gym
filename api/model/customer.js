@@ -1,12 +1,18 @@
 const mongoose = require("mongoose");
 customerSchema = mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
-  customerName: String,
+  customerName: {
+    type: String,
+    required: true,
+  },
   age: Number,
   gender: String,
   bloodGroup: String,
   address: String,
-  phone: Number,
+  phone: {
+    type: String,
+    required: true,
+  },
   email: String,
   password: String,
   currentBeginDate: String,
