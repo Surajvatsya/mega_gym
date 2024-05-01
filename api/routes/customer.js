@@ -176,8 +176,8 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
       _id: new mongoose.Types.ObjectId(),
       customerId: customerId,
       duration: req.body.validTill,
-      fee: 3000,            // change later
-      discount: 0,          // change later
+      fee: 3000, // change later
+      discount: 0, // change later
     });
 
     const customer = new Customer({
@@ -278,6 +278,6 @@ router.delete("/deleteCustomer/:customerId", verifyToken, async (req, res) => {
     console.log("Error", error);
     res.status(500).json({ message: "Internal server error" });
   }
-})
+});
 
 module.exports = router;

@@ -109,7 +109,7 @@ router.post("/login", (req, res) => {
 
 router.get("/analysis", verifyToken, async (req, res) => {
   const numberOfPeople = await Customer.countDocuments();
-  let genderRatio = await Customer.aggregate([
+  const genderRatio = await Customer.aggregate([
     {
       $group: {
         _id: "$gender", // Group by gender field
@@ -117,6 +117,18 @@ router.get("/analysis", verifyToken, async (req, res) => {
       },
     },
   ]);
+
+  const gender = genderRatio.reduce(
+    (acc, ele) => {
+      if (ele._id == "Male") {
+        acc.Male = ele.count;
+      } else {
+        acc.Female = ele.count;
+      }
+      return acc;
+    },
+    { Male: 0, Female: 0 },
+  );
 
   let planAnalysis = await Plan.aggregate([
     {
@@ -128,18 +140,24 @@ router.get("/analysis", verifyToken, async (req, res) => {
     },
   ]);
 
+  console.log("planAnalysis", planAnalysis);
+
   if (!numberOfPeople)
-    return res.status(404).json({ message: "Customer not found" });
+    return res
+      .status(404)
+      .json({ message: "No customers records found in DB" });
 
   if (!genderRatio)
-    return res.status(404).json({ message: "Gender not found" });
+    return res.status(404).json({ message: "No gender data found" });
   if (!planAnalysis)
-    return res.status(404).json({ message: "planAnalysis not found" });
+    return res.status(404).json({ message: "planAnalysis data not found" });
 
   res.status(200).json({
-    genderRatio,
+    males: gender.Male,
+    females: gender.Female,
     numberOfPeople,
-    planAnalysis,
+    averageMonth: planAnalysis[0].averageMonth,
+    earnings: planAnalysis[0].fee,
   });
 });
 
