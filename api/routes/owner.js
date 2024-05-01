@@ -140,7 +140,6 @@ router.get("/analysis", verifyToken, async (req, res) => {
     },
   ]);
 
-  console.log("planAnalysis", planAnalysis);
 
   if (!numberOfPeople)
     return res
@@ -156,7 +155,7 @@ router.get("/analysis", verifyToken, async (req, res) => {
     males: gender.Male,
     females: gender.Female,
     numberOfPeople,
-    averageMonth: planAnalysis[0].averageMonth,
+    averageMonth: Math.round(planAnalysis[0].averageMonth),
     earnings: planAnalysis[0].fee,
   });
 });
