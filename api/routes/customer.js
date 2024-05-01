@@ -176,8 +176,8 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
       _id: new mongoose.Types.ObjectId(),
       customerId: customerId,
       duration: req.body.validTill,
-      fee: 3000,
-      discount: 0,
+      fee: 3000,            // change later
+      discount: 0,          // change later
     });
 
     const customer = new Customer({
@@ -266,5 +266,18 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+router.delete("/deleteCustomer/:customerId", verifyToken, async (req, res) => {
+  try {
+    const customerId = req.params.customerId;
+    const deletedCustomer = await Customer.findByIdAndDelete(customerId);
+    if (!deletedCustomer)
+      return res.status(404).json({ message: "Customer not found" });
+    res.status(200).json({ deletedCustomer });
+  } catch (error) {
+    console.log("Error", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+})
 
 module.exports = router;
