@@ -31,9 +31,24 @@ router.post("/signup", (req, res) => {
       owner
         .save()
         .then((result) => {
-          res.status(200).json({
-            new_owner: result,
-          });
+          if (result) {
+            const token = jwt.sign(
+              {
+                ownerName: req.body.ownerName,
+                email: req.body.email,
+                contact: req.body.contact,
+                userType: req.body.userType,
+              },
+              process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
+              {
+                expiresIn: "10000000000hr",
+              },
+            );
+            res.status(200).json({
+              new_owner: result,
+              token: token,
+            });
+          }
         })
         .catch((err) => {
           console.log(err);
