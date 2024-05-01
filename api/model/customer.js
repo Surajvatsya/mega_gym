@@ -9,7 +9,7 @@ customerSchema = mongoose.Schema({
   gender: String,
   bloodGroup: String,
   address: String,
-  phone: {
+  contact: {
     type: String,
     required: true,
   },
@@ -17,7 +17,7 @@ customerSchema = mongoose.Schema({
   password: String,
   currentBeginDate: String,
   currentFinishDate: String,
-  gymId: String,
+  gymName: String,
 });
 
 module.exports = mongoose.model("customer", customerSchema);

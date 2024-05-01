@@ -81,7 +81,7 @@ router.post("/login", (req, res) => {
             {
               ownerName: owner[0].ownerName,
               email: owner[0].email,
-              phone: owner[0].phone,
+              contact: owner[0].contact,
               userType: owner[0].userType,
             },
             process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
@@ -92,7 +92,7 @@ router.post("/login", (req, res) => {
           res.status(200).json({
             owner: owner[0].ownerName,
             userType: owner[0].userType,
-            phone: owner[0].phone,
+            contact: owner[0].contact,
             email: owner[0].email,
             token: token,
           });

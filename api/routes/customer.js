@@ -27,7 +27,7 @@ router.post("/signup", (req, res) => {
         customerName: req.body.customerName,
         password: hash,
         email: req.body.email,
-        phone: req.body.phone,
+        contact: req.body.contact,
         address: req.body.address,
         age: req.body.age,
         gender: req.body.gender,
@@ -81,7 +81,7 @@ router.post("/login", (req, res) => {
             {
               customerName: customer[0].customerName,
               email: customer[0].email,
-              phone: customer[0].phone,
+              contact: customer[0].contact,
               userType: customer[0].userType,
             },
             process.env.JWT_TOKEN,
@@ -92,7 +92,7 @@ router.post("/login", (req, res) => {
           res.status(200).json({
             customer: customer[0].customerName,
             userType: customer[0].userType,
-            phone: customer[0].phone,
+            contact: customer[0].contact,
             email: customer[0].email,
             token: token,
           });
@@ -132,7 +132,7 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
             gender: customer.gender,
             bloodGroup: customer.bloodGroup,
             address: customer.address,
-            phone: customer.phone,
+            contact: customer.contact,
             email: customer.email,
             currentBeginDate: customer.currentBeginDate,
             currentFinishDate: customer.currentFinishDate,
@@ -147,7 +147,7 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
             gender: customer.gender,
             bloodGroup: customer.bloodGroup,
             address: customer.address,
-            phone: customer.phone,
+            contact: customer.contact,
             email: customer.email,
             currentBeginDate: customer.currentBeginDate,
             currentFinishDate: customer.currentFinishDate,
@@ -184,7 +184,7 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
       _id: customerId,
       customerName: req.body.customerName,
       email: req.body.email,
-      phone: req.body.phone,
+      contact: req.body.contact,
       address: req.body.address,
       age: req.body.age,
       gender: req.body.gender,
@@ -194,7 +194,7 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
         req.body.currentBeginDate,
         req.body.validTill,
       ),
-      gymId: req.body.gymId,
+      gymName: req.body.gymName,
     });
 
     const [planResult, customerResult] = await Promise.all([

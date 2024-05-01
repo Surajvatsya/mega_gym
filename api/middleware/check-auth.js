@@ -19,7 +19,7 @@ router.post("/signup", (req, res, next) => {
         userName: req.body.userName,
         password: hash,
         email: req.body.email,
-        phone: req.body.phone,
+        contact: req.body.contact,
       });
 
       user
@@ -62,7 +62,7 @@ router.post("/login", (req, res, next) => {
             {
               userName: user[0].username,
               email: user[0].email,
-              phone: user[0].phone,
+              contact: user[0].contact,
             },
             process.env.JWT_TOKEN,
             {
@@ -71,7 +71,7 @@ router.post("/login", (req, res, next) => {
           );
           res.status(200).json({
             userName: user[0].userName,
-            phone: user[0].phone,
+            contact: user[0].contact,
             email: user[0].email,
             token: token,
           });
