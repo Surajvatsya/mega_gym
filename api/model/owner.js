@@ -7,6 +7,7 @@ ownerSchema = mongoose.Schema({
   gymName: String,
   contact: Number,
   address: String,
+  upiId: String,
 });
 
 module.exports = mongoose.model("owner", ownerSchema);

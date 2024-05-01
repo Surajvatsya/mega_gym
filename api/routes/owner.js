@@ -25,6 +25,7 @@ router.post("/signup", (req, res) => {
         gymName: req.body.gymName,
         contact: req.body.contact,
         address: req.body.address,
+        upiId: req.body.upiId,
       });
 
       owner
