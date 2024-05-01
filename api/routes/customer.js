@@ -119,12 +119,12 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
       year: "numeric",
     });
 
-    console.log("currentDate", currentDate);
     const parseCurrDate = new Date(currentDate);
     const groupedData = customers.reduce(
       (acc, customer) => {
         const parseFinishdate = new Date(customer.currentFinishDate);
         if (parseFinishdate >= parseCurrDate) {
+          const expiryIndays = (parseFinishdate - parseCurrDate) / (1000 * 60 * 60 * 24);
           acc.current.push({
             id: customer.id,
             customerName: customer.customerName,
@@ -137,7 +137,7 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
             currentBeginDate: customer.currentBeginDate,
             currentFinishDate: customer.currentFinishDate,
             gymId: customer.gymId,
-            expiring: (parseFinishdate - parseCurrDate) / (1000 * 60 * 60 * 24),
+            expiring: expiryIndays <= 10 ? expiryIndays : null,
           });
         } else {
           acc.expired.push({
