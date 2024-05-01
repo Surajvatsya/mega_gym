@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 customerSchema = mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
+  gymId: mongoose.Schema.Types.ObjectId,
   customerName: {
     type: String,
     required: true,

@@ -17,8 +17,10 @@ router.post("/signup", (req, res) => {
         error: err,
       });
     } else {
+      const gymId = new mongoose.Types.ObjectId();
       const owner = new Owner({
         _id: new mongoose.Types.ObjectId(),
+        gymId,
         ownerName: req.body.ownerName,
         password: hash,
         email: req.body.email,
@@ -35,6 +37,7 @@ router.post("/signup", (req, res) => {
             const token = jwt.sign(
               {
                 ownerName: req.body.ownerName,
+                gymId,
                 email: req.body.email,
                 contact: req.body.contact,
                 userType: req.body.userType,
@@ -139,7 +142,6 @@ router.get("/analysis", verifyToken, async (req, res) => {
       },
     },
   ]);
-
 
   if (!numberOfPeople)
     return res

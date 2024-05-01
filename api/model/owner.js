@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 ownerSchema = mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
+  gymId: mongoose.Schema.Types.ObjectId,
   ownerName: {
     type: String,
     required: true,

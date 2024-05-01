@@ -109,7 +109,9 @@ router.post("/login", (req, res) => {
 
 router.get("/getCustomers", verifyToken, async (req, res) => {
   try {
-    const customers = await Customer.find({});
+    gymId = req.body.gymId;
+
+    const customers = await Customer.find({ gymId });
 
     const today = new Date();
 
@@ -124,7 +126,8 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
       (acc, customer) => {
         const parseFinishdate = new Date(customer.currentFinishDate);
         if (parseFinishdate >= parseCurrDate) {
-          const expiryIndays = (parseFinishdate - parseCurrDate) / (1000 * 60 * 60 * 24);
+          const expiryIndays =
+            (parseFinishdate - parseCurrDate) / (1000 * 60 * 60 * 24);
           acc.current.push({
             id: customer.id,
             customerName: customer.customerName,
