@@ -109,10 +109,8 @@ router.post("/login", (req, res) => {
 
 router.get("/getCustomers", verifyToken, async (req, res) => {
   try {
-    gymId = req.body.gymId;
-
-    const customers = await Customer.find({ gymId });
-
+    const gymOwnerId = req.jwt.ownerId;
+    const customers = await Customer.find({ gymId: gymOwnerId });
     const today = new Date();
 
     const currentDate = today.toLocaleDateString("en-IN", {
@@ -177,6 +175,7 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
     const customerId = new mongoose.Types.ObjectId();
     const newPlan = new Plan({
       _id: new mongoose.Types.ObjectId(),
+      gymId: req.jwt.ownerId,
       customerId: customerId,
       duration: req.body.validTill,
       fee: 3000, // change later
@@ -198,6 +197,7 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
         req.body.validTill,
       ),
       gymName: req.body.gymName,
+      gymId: req.jwt.ownerId,
     });
 
     const [planResult, customerResult] = await Promise.all([

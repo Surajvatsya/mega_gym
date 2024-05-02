@@ -17,10 +17,9 @@ router.post("/signup", (req, res) => {
         error: err,
       });
     } else {
-      const gymId = new mongoose.Types.ObjectId();
+      const ownerId = new mongoose.Types.ObjectId();
       const owner = new Owner({
-        _id: new mongoose.Types.ObjectId(),
-        gymId,
+        _id: ownerId,
         ownerName: req.body.ownerName,
         password: hash,
         email: req.body.email,
@@ -36,8 +35,7 @@ router.post("/signup", (req, res) => {
           if (result) {
             const token = jwt.sign(
               {
-                ownerName: req.body.ownerName,
-                gymId,
+                ownerId,
                 email: req.body.email,
                 contact: req.body.contact,
                 userType: req.body.userType,
@@ -111,16 +109,18 @@ router.post("/login", (req, res) => {
 });
 
 router.get("/analysis", verifyToken, async (req, res) => {
-  const numberOfPeople = await Customer.countDocuments();
+  const gymOwnerId = new mongoose.Types.ObjectId(req.jwt.ownerId);
+  const numberOfPeople = await Customer.countDocuments({ gymId: gymOwnerId });
+  const customers = await Customer.find({ gymId: gymOwnerId });
   const genderRatio = await Customer.aggregate([
+    { $match: { gymId: gymOwnerId } },
     {
       $group: {
-        _id: "$gender", // Group by gender field
-        count: { $sum: 1 }, // Count documents in each group
+        _id: "$gender",
+        count: { $sum: 1 },
       },
     },
   ]);
-
   const gender = genderRatio.reduce(
     (acc, ele) => {
       if (ele._id == "Male") {
@@ -133,7 +133,10 @@ router.get("/analysis", verifyToken, async (req, res) => {
     { Male: 0, Female: 0 },
   );
 
-  let planAnalysis = await Plan.aggregate([
+  const planAnalysis = await Plan.aggregate([
+    {
+      $match: { gymId: gymOwnerId },
+    },
     {
       $group: {
         _id: null, // Group by gender field
@@ -157,9 +160,28 @@ router.get("/analysis", verifyToken, async (req, res) => {
     males: gender.Male,
     females: gender.Female,
     numberOfPeople,
-    averageMonth: Math.round(planAnalysis[0].averageMonth),
-    earnings: planAnalysis[0].fee,
+    averageMonth:
+      planAnalysis.length == 0
+        ? null
+        : Math.round(planAnalysis[0].averageMonth),
+    earnings: planAnalysis.length == 0 ? null : planAnalysis[0].fee,
   });
+});
+
+router.get("/getUpiId", verifyToken, async (req, res) => {
+  try {
+    const ownerId = req.jwt.ownerId;
+    const owner = await Owner.findById(ownerId);
+    if (!owner) {
+      res.status(404).json({
+        message: "Owner doesn't exist",
+      });
+    }
+    res.status(200).json({ upiId: owner.upiId });
+  } catch (err) {
+    console.log("Error ", err);
+    res.status(500).json({ error: "internal server error" });
+  }
 });
 
 module.exports = router;
