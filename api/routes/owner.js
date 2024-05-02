@@ -27,6 +27,7 @@ router.post("/signup", (req, res) => {
         contact: req.body.contact,
         address: req.body.address,
         upiId: req.body.upiId,
+        deviceToken: req.body.deviceToken,        
       });
 
       owner
@@ -80,7 +81,7 @@ router.post("/login", (req, res) => {
         if (result) {
           const token = jwt.sign(
             {
-              ownerName: owner[0].ownerName,
+              ownerId: owner[0].id,
               email: owner[0].email,
               contact: owner[0].contact,
               userType: owner[0].userType,
