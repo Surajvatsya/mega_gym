@@ -178,8 +178,12 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
       gymId: req.jwt.ownerId,
       customerId: customerId,
       duration: req.body.validTill,
-      fee: 3000, // change later
-      discount: 0, // change later
+      fee: req.body.charges,
+      startDate: req.body.currentBeginDate,
+      endDate: addValidTillToCurrDate(
+        req.body.currentBeginDate,
+        req.body.validTill,
+      ),
     });
 
     const customer = new Customer({
@@ -230,25 +234,29 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
 });
 
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
+
+  let finishDate = addValidTillToCurrDate(
+    req.body.currentBeginDate,
+    req.body.validTill,
+  );
+
   try {
     const customerId = req.params.customerId;
     const newPlan = new Plan({
       _id: new mongoose.Types.ObjectId(),
       customerId: customerId,
       duration: req.body.validTill,
-      fee: 3000,
-      discount: 0,
+      fee: req.body.charges,
+      startDate: req.body.currentBeginDate,
+      endDate: finishDate
     });
 
     const createPlan = await newPlan.save();
 
-    let currentFinishDate = addValidTillToCurrDate(
-      req.body.currentBeginDate,
-      req.body.validTill,
-    );
+    
     let updateFields = {
       currentBeginDate: req.body.currentBeginDate,
-      currentFinishDate,
+      finishDate,
     };
 
     const updatedCustomer = await Customer.findByIdAndUpdate(

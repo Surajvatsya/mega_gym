@@ -10,6 +10,7 @@ const { urlencoded, json } = require("body-parser");
 const cors = require("cors");
 const dbUrl =
   "mongodb+srv://surajkumar742494:J9qYedaef8h5WbSg@gym.ftaj8yk.mongodb.net/?retryWrites=true&w=majority&appName=GYM";
+const isDeveloperMode = true;
 
 mongoose.connect(dbUrl);
 
