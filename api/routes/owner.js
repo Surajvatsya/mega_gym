@@ -27,7 +27,7 @@ router.post("/signup", (req, res) => {
         contact: req.body.contact,
         address: req.body.address,
         upiId: req.body.upiId,
-        deviceToken: req.body.deviceToken,        
+        deviceToken: req.body.deviceToken,
       });
 
       owner

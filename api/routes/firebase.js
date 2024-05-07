@@ -8,29 +8,38 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-router.post("/pushNotification", (req, res) => {
-  const token = req.body.token;
-  if (!token) return res.status(401).json({ error: "Token not provided" });
+router.post("/pushNotification", async (req, res) => {
+  try {
+    const ownerId = req.jwt.ownerId;
+    const owner = await Owner.findById(ownerId);
+    if (!owner) {
+      res.status(404).json({
+        message: "Owner doesn't exist",
+      });
+    }
+    const message = {
+      notification: {
+        title: req.body.title,
+        body: req.body.body,
+      },
+      token: owner.token,
+    };
 
-  const message = {
-    notification: {
-      title: req.body.title,
-      body: req.body.body,
-    },
-    token: token,
-  };
-
-  admin
-    .messaging()
-    .send(message)
-    .then((response) => {
-      console.log("Notification sent successfully ", response);
-      res.status(200).json({ message: "Notification sent" });
-    })
-    .catch((err) => {
-      console.log("Error sending Notification ", response);
-      res.status(500).json({ error: err.message });
-    });
+    admin
+      .messaging()
+      .send(message)
+      .then((response) => {
+        console.log("Notification sent successfully ", response);
+        res.status(200).json({ message: "Notification sent" });
+      })
+      .catch((err) => {
+        console.log("Error sending Notification ", response);
+        res.status(500).json({ error: err.message });
+      });
+  } catch (err) {
+    console.log("Error :", err);
+    res.status(500).json({ error: err });
+  }
 });
 
 module.exports = router;

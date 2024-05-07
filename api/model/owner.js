@@ -20,7 +20,7 @@ ownerSchema = mongoose.Schema({
     required: true,
   },
   upiId: String,
-  deviceToken : String,
+  deviceToken: String,
 });
 
 module.exports = mongoose.model("owner", ownerSchema);
