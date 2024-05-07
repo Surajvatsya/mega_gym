@@ -21,7 +21,7 @@ router.post("/signup", (req, res) => {
       const ownerId = new mongoose.Types.ObjectId();
       const owner = new Owner({
         _id: ownerId,
-        ownerName: req.body.ownerName,
+        name: req.body.ownerName,
         password: hash,
         email: req.body.email,
         gymName: req.body.gymName,
@@ -92,6 +92,9 @@ router.post("/login", (req, res) => {
               expiresIn: "10000000000hr",
             },
           );
+
+          Owner.findByIdAndUpdate(owner.id, { deviceToken: req.body.deviceToken }, { new: true });
+
           res.status(200).json({
             owner: owner[0].ownerName,
             userType: owner[0].userType,
@@ -102,7 +105,6 @@ router.post("/login", (req, res) => {
         }
       });
     })
-
     .catch((err) => {
       res.status(500).json({
         error: err,
@@ -244,15 +246,3 @@ router.post('/analysis/:key', verifyToken, async (req, res) => {
     res.sendStatus(500);
   }
 })
-
-function getValue(plan, key) {
-  if (key == "earnings") {
-    return plan.fee;
-  }
-  else if (key == "people") {
-    return 1;
-  }
-  else {
-    return 0;
-  }
-}

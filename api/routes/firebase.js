@@ -1,12 +1,5 @@
-const admin = require("firebase-admin");
 const express = require("express");
 const router = express.Router();
-
-const serviceAccount = require("../../notification.json");
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
 
 router.post("/pushNotification", (req, res) => {
   const token = req.body.token;
