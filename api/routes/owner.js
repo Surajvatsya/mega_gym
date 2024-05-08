@@ -147,25 +147,15 @@ router.get("/analysis", verifyToken, async (req, res) => {
     },
   ]);
 
-  if (!numberOfPeople)
-    return res
-      .status(404)
-      .json({ message: "No customers records found in DB" });
-
-  if (!genderRatio)
-    return res.status(404).json({ message: "No gender data found" });
-  if (!planAnalysis)
-    return res.status(404).json({ message: "planAnalysis data not found" });
-
   res.status(200).json({
     males: gender.Male,
     females: gender.Female,
     numberOfPeople,
     averageMonth:
       planAnalysis.length == 0
-        ? null
+        ? 0
         : Math.round(planAnalysis[0].averageMonth),
-    earnings: planAnalysis.length == 0 ? null : planAnalysis[0].fee,
+    earnings: planAnalysis.length == 0 ? 0 : planAnalysis[0].fee,
   });
 });
 
@@ -175,10 +165,13 @@ router.get("/getUpiId", verifyToken, async (req, res) => {
     const owner = await Owner.findById(ownerId);
     if (!owner) {
       res.status(404).json({
-        message: "Owner doesn't exist",
+        upiId: "",
       });
     }
-    res.status(200).json({ upiId: owner.upiId });
+    else {
+      res.status(200).json({ upiId: owner.upiId });
+
+    }
   } catch (err) {
     console.log("Error ", err);
     res.status(500).json({ error: "internal server error" });
