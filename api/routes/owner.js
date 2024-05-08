@@ -8,6 +8,7 @@ require("dotenv").config();
 const Customer = require("../model/customer");
 const verifyToken = require("../middleware/jwt");
 const Plan = require("../model/plan");
+const Utils = require("../utils")
 
 router.post("/signup", (req, res) => {
   console.log(req.body);
@@ -20,7 +21,7 @@ router.post("/signup", (req, res) => {
       const ownerId = new mongoose.Types.ObjectId();
       const owner = new Owner({
         _id: ownerId,
-        ownerName: req.body.ownerName,
+        name: req.body.ownerName,
         password: hash,
         email: req.body.email,
         gymName: req.body.gymName,
@@ -91,6 +92,9 @@ router.post("/login", (req, res) => {
               expiresIn: "10000000000hr",
             },
           );
+
+          Owner.findByIdAndUpdate(owner.id, { deviceToken: req.body.deviceToken }, { new: true });
+
           res.status(200).json({
             owner: owner[0].ownerName,
             userType: owner[0].userType,
@@ -101,7 +105,6 @@ router.post("/login", (req, res) => {
         }
       });
     })
-
     .catch((err) => {
       res.status(500).json({
         error: err,
@@ -179,3 +182,60 @@ router.get("/getUpiId", verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+
+
+router.post('/analysis/:key', verifyToken, async (req, res) => {
+  try {
+
+    const currentDate = new Date();
+    const keys = [currentDate.getMonth() - 3, currentDate.getMonth() - 2, currentDate.getMonth() - 1, currentDate.getMonth()];
+    const plans = await Plan.find({ gymId: req.jwt.ownerId });
+
+
+    var total = 0;
+    var maxValue = 0;
+
+    if (req.params.key == "earnings") {
+      const values = keys.map(month => {
+
+        const plansForMonth = plans.filter(plan => new Date(plan.startDate).getMonth() === month);
+        const valuesForMonth = plansForMonth.reduce((total, plan) => total + plan.fee, 0);
+        total = total + valuesForMonth;
+        maxValue = maxValue < valuesForMonth ? valuesForMonth : maxValue;
+        return valuesForMonth;
+      });
+      responseObject = {
+        titles: keys.map(number => Utils.getMonthFromNumber(number)),
+        data: values,
+        average: (total / keys.length).toString(),
+        total: total.toString(),
+        maxLimitOfData: (maxValue * 1.2)
+      }
+
+      res.status(200).json(responseObject);
+    }
+    else if (req.params.key == "people") {
+      console.log(plans)
+      const values = keys.map(month => {
+        const valuesForMonth = plans.filter(plan => new Date(plan.startDate).getMonth() <= month && new Date(plan.endDate).getMonth() >= month).length;
+        total = total + valuesForMonth;
+        maxValue = maxValue < valuesForMonth ? valuesForMonth : maxValue;
+        return valuesForMonth;
+      });
+      responseObject = {
+        titles: keys.map(number => Utils.getMonthFromNumber(number)),
+        data: values,
+        average: (total / keys.length).toString(),
+        total: total.toString(),
+        maxLimitOfData: (maxValue * 1.2)
+      }
+
+      res.status(200).json(responseObject);
+    }
+
+  }
+  catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
