@@ -115,7 +115,6 @@ router.post("/login", (req, res) => {
 router.get("/analysis", verifyToken, async (req, res) => {
   const gymOwnerId = new mongoose.Types.ObjectId(req.jwt.ownerId);
   const numberOfPeople = await Customer.countDocuments({ gymId: gymOwnerId });
-  const customers = await Customer.find({ gymId: gymOwnerId });
   const genderRatio = await Customer.aggregate([
     { $match: { gymId: gymOwnerId } },
     {
@@ -238,4 +237,10 @@ router.post('/analysis/:key', verifyToken, async (req, res) => {
     console.log(err);
     res.sendStatus(500);
   }
+})
+
+router.put("/upiId", verifyToken, async (req, res) => {
+  await Owner.findByIdAndUpdate(req.jwt.ownerId, { upiId: req.body.upiId }, { new: true });
+  const owner = await Owner.findById(req.jwt.ownerId);
+  res.status(200).json(owner);
 })
