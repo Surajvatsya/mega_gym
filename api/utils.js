@@ -41,7 +41,7 @@ const addValidTillToCurrDate = (currentBeginDate, validTill) => {
 
   return date.toLocaleDateString("en-IN", {
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
   });
 };
