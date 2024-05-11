@@ -234,7 +234,6 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
 });
 
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
-
   let finishDate = addValidTillToCurrDate(
     req.body.currentBeginDate,
     req.body.validTill,
@@ -248,12 +247,11 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
       duration: req.body.validTill,
       fee: req.body.charges,
       startDate: req.body.currentBeginDate,
-      endDate: finishDate
+      endDate: finishDate,
     });
 
     const createPlan = await newPlan.save();
 
-    
     let updateFields = {
       currentBeginDate: req.body.currentBeginDate,
       finishDate,

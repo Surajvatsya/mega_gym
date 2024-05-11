@@ -8,7 +8,7 @@ require("dotenv").config();
 const Customer = require("../model/customer");
 const verifyToken = require("../middleware/jwt");
 const Plan = require("../model/plan");
-const Utils = require("../utils")
+const Utils = require("../utils");
 
 router.post("/signup", (req, res) => {
   console.log(req.body);
@@ -93,7 +93,11 @@ router.post("/login", (req, res) => {
             },
           );
 
-          Owner.findByIdAndUpdate(owner.id, { deviceToken: req.body.deviceToken }, { new: true });
+          Owner.findByIdAndUpdate(
+            owner.id,
+            { deviceToken: req.body.deviceToken },
+            { new: true },
+          );
 
           res.status(200).json({
             owner: owner[0].ownerName,
@@ -113,52 +117,153 @@ router.post("/login", (req, res) => {
 });
 
 router.get("/analysis", verifyToken, async (req, res) => {
-  const gymOwnerId = new mongoose.Types.ObjectId(req.jwt.ownerId);
-  const numberOfPeople = await Customer.countDocuments({ gymId: gymOwnerId });
-  const genderRatio = await Customer.aggregate([
-    { $match: { gymId: gymOwnerId } },
-    {
-      $group: {
-        _id: "$gender",
-        count: { $sum: 1 },
-      },
-    },
-  ]);
-  const gender = genderRatio.reduce(
-    (acc, ele) => {
-      if (ele._id == "Male") {
-        acc.Male = ele.count;
-      } else {
-        acc.Female = ele.count;
-      }
-      return acc;
-    },
-    { Male: 0, Female: 0 },
-  );
+  try {
+    const gymOwnerId = new mongoose.Types.ObjectId(req.jwt.ownerId);
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
 
-  const planAnalysis = await Plan.aggregate([
-    {
-      $match: { gymId: gymOwnerId },
-    },
-    {
-      $group: {
-        _id: null, // Group by gender field
-        averageMonth: { $avg: "$duration" }, // Count documents in each group
-        fee: { $sum: "$fee" }, // Count documents in each group
+    const numberOfPeople = await Customer.aggregate([
+      {
+        $match: {
+          gymId: gymOwnerId,
+          $expr: {
+            $and: [
+              {
+                $eq: [
+                  {
+                    $year: {
+                      $dateFromString: { dateString: "$currentBeginDate" },
+                    },
+                  },
+                  currentYear,
+                ],
+              },
+              {
+                $eq: [
+                  {
+                    $month: {
+                      $dateFromString: { dateString: "$currentBeginDate" },
+                    },
+                  },
+                  currentMonth,
+                ],
+              },
+            ],
+          },
+        },
       },
-    },
-  ]);
+      {
+        $group: {
+          _id: "$_id",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-  res.status(200).json({
-    males: gender.Male,
-    females: gender.Female,
-    numberOfPeople,
-    averageMonth:
-      planAnalysis.length == 0
-        ? 0
-        : Math.round(planAnalysis[0].averageMonth),
-    earnings: planAnalysis.length == 0 ? 0 : planAnalysis[0].fee,
-  });
+    const genderRatio = await Customer.aggregate([
+      {
+        $match: {
+          gymId: gymOwnerId,
+          $expr: {
+            $and: [
+              {
+                $eq: [
+                  {
+                    $year: {
+                      $dateFromString: { dateString: "$currentBeginDate" },
+                    },
+                  },
+                  currentYear,
+                ],
+              },
+              {
+                $eq: [
+                  {
+                    $month: {
+                      $dateFromString: { dateString: "$currentBeginDate" },
+                    },
+                  },
+                  currentMonth,
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$gender",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+
+    const gender = genderRatio.reduce(
+      (acc, ele) => {
+        if (ele._id == "Male") {
+          acc.Male = ele.count;
+        } else {
+          acc.Female = ele.count;
+        }
+        return acc;
+      },
+      { Male: 0, Female: 0 },
+    );
+
+    const planAnalysis = await Plan.aggregate([
+      {
+        $match: {
+          gymId: gymOwnerId,
+          $expr: {
+            $and: [
+              {
+                $eq: [
+                  {
+                    $year: {
+                      $dateFromString: { dateString: "$startDate" },
+                    },
+                  },
+                  currentYear,
+                ],
+              },
+              {
+                $eq: [
+                  {
+                    $month: {
+                      $dateFromString: { dateString: "$startDate" },
+                    },
+                  },
+                  currentMonth,
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null, // Group by gender field
+          averageMonth: { $avg: "$duration" }, // Count documents in each group
+          fee: { $sum: "$fee" }, // Count documents in each group
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      males: gender.Male,
+      females: gender.Female,
+      numberOfPeople : numberOfPeople.length,
+      averageMonth:
+        planAnalysis.length == 0
+          ? null
+          : Math.round(planAnalysis[0].averageMonth),
+      earnings: planAnalysis.length == 0 ? null : planAnalysis[0].fee,
+    });
+  } catch (error) {
+    console.log("err", error);
+  }
 });
 
 router.get("/getUpiId", verifyToken, async (req, res) => {
@@ -169,10 +274,8 @@ router.get("/getUpiId", verifyToken, async (req, res) => {
       res.status(404).json({
         upiId: "",
       });
-    }
-    else {
+    } else {
       res.status(200).json({ upiId: owner.upiId });
-
     }
   } catch (err) {
     console.log("Error ", err);
@@ -182,65 +285,76 @@ router.get("/getUpiId", verifyToken, async (req, res) => {
 
 module.exports = router;
 
-
-router.post('/analysis/:key', verifyToken, async (req, res) => {
+router.post("/analysis/:key", verifyToken, async (req, res) => {
   try {
-
     const currentDate = new Date();
-    const keys = [currentDate.getMonth() - 3, currentDate.getMonth() - 2, currentDate.getMonth() - 1, currentDate.getMonth()];
+    const keys = [
+      currentDate.getMonth() - 3,
+      currentDate.getMonth() - 2,
+      currentDate.getMonth() - 1,
+      currentDate.getMonth(),
+    ];
     const plans = await Plan.find({ gymId: req.jwt.ownerId });
-
 
     var total = 0;
     var maxValue = 0;
 
     if (req.params.key == "earnings") {
-      const values = keys.map(month => {
-
-        const plansForMonth = plans.filter(plan => new Date(plan.startDate).getMonth() === month);
-        const valuesForMonth = plansForMonth.reduce((total, plan) => total + plan.fee, 0);
+      const values = keys.map((month) => {
+        const plansForMonth = plans.filter(
+          (plan) => new Date(plan.startDate).getMonth() === month,
+        );
+        const valuesForMonth = plansForMonth.reduce(
+          (total, plan) => total + plan.fee,
+          0,
+        );
         total = total + valuesForMonth;
         maxValue = maxValue < valuesForMonth ? valuesForMonth : maxValue;
         return valuesForMonth;
       });
       responseObject = {
-        titles: keys.map(number => Utils.getMonthFromNumber(number)),
+        titles: keys.map((number) => Utils.getMonthFromNumber(number)),
         data: values,
         average: (total / keys.length).toString(),
         total: total.toString(),
-        maxLimitOfData: (maxValue * 1.2)
-      }
+        maxLimitOfData: maxValue * 1.2,
+      };
 
       res.status(200).json(responseObject);
-    }
-    else if (req.params.key == "people") {
-      console.log(plans)
-      const values = keys.map(month => {
-        const valuesForMonth = plans.filter(plan => new Date(plan.startDate).getMonth() <= month && new Date(plan.endDate).getMonth() >= month).length;
+    } else if (req.params.key == "people") {
+      console.log(plans);
+      const values = keys.map((month) => {
+        const valuesForMonth = plans.filter(
+          (plan) =>
+            new Date(plan.startDate).getMonth() <= month &&
+            new Date(plan.endDate).getMonth() >= month,
+        ).length;
         total = total + valuesForMonth;
         maxValue = maxValue < valuesForMonth ? valuesForMonth : maxValue;
         return valuesForMonth;
       });
       responseObject = {
-        titles: keys.map(number => Utils.getMonthFromNumber(number)),
+        titles: keys.map((number) => Utils.getMonthFromNumber(number)),
         data: values,
         average: (total / keys.length).toString(),
         total: total.toString(),
-        maxLimitOfData: (maxValue * 1.2)
-      }
+        maxLimitOfData: maxValue * 1.2,
+      };
 
       res.status(200).json(responseObject);
     }
-
-  }
-  catch (err) {
+  } catch (err) {
     console.log(err);
     res.sendStatus(500);
   }
-})
+});
 
 router.put("/upiId", verifyToken, async (req, res) => {
-  await Owner.findByIdAndUpdate(req.jwt.ownerId, { upiId: req.body.upiId }, { new: true });
+  await Owner.findByIdAndUpdate(
+    req.jwt.ownerId,
+    { upiId: req.body.upiId },
+    { new: true },
+  );
   const owner = await Owner.findById(req.jwt.ownerId);
   res.status(200).json(owner);
-})
+});

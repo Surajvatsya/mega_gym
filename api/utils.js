@@ -46,11 +46,15 @@ const addValidTillToCurrDate = (currentBeginDate, validTill) => {
   });
 };
 
-function getMonthFromNumber(number)
-{
+function getMonthFromNumber(number) {
   const currentDate = new Date();
-  return new Date(currentDate.getFullYear(), number).toLocaleString('en-US', { month: 'long' });
+  return new Date(currentDate.getFullYear(), number).toLocaleString("en-US", {
+    month: "long",
+  });
 }
 
-
-module.exports = { convertUtcToLongDateFormat, addValidTillToCurrDate,getMonthFromNumber };
+module.exports = {
+  convertUtcToLongDateFormat,
+  addValidTillToCurrDate,
+  getMonthFromNumber,
+};

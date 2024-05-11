@@ -1,9 +1,9 @@
 const http = require("http");
 const app = require("./app");
 require("dotenv").config();
-const cron = require('node-cron');
+const cron = require("node-cron");
 const Customer = require("./api/model/customer");
-const Owner = require('./api/model/owner');
+const Owner = require("./api/model/owner");
 const admin = require("firebase-admin");
 
 const serviceAccount = require("./notification.json");
@@ -13,7 +13,6 @@ admin.initializeApp({
 });
 
 function pushNotification(deviceToken, title, body) {
-
   const message = {
     notification: {
       title: title,
@@ -33,19 +32,18 @@ function pushNotification(deviceToken, title, body) {
     });
 }
 
-
-const reminderJob = cron.schedule('0 8 * * * *', async () => {
-
+const reminderJob = cron.schedule("0 8 * * * *", async () => {
   const customers = await Customer.find({}).exec();
 
-  customers.forEach(async customer => {
+  customers.forEach(async (customer) => {
     const finishDate = new Date(customer.currentFinishDate);
     const currentDate = new Date();
 
-    if (currentDate.getDate() == finishDate.getDate() &&
+    if (
+      currentDate.getDate() == finishDate.getDate() &&
       currentDate.getMonth() == finishDate.getMonth() &&
-      currentDate.getFullYear() == finishDate.getFullYear()) {
-
+      currentDate.getFullYear() == finishDate.getFullYear()
+    ) {
       const owner = await Owner.findById(customer.gymId).exec();
 
       const title = `Hello ${owner.name}`;
@@ -55,7 +53,7 @@ const reminderJob = cron.schedule('0 8 * * * *', async () => {
       console.log(body);
     }
   });
-})
+});
 
 reminderJob.start();
 
