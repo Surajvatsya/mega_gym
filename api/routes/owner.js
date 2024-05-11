@@ -128,7 +128,7 @@ router.get("/analysis", verifyToken, async (req, res) => {
         $match: {
           gymId: gymOwnerId,
           $expr: {
-            $and: [
+            $and: [ //performs logical and for all 
               {
                 $eq: [
                   {
@@ -257,9 +257,9 @@ router.get("/analysis", verifyToken, async (req, res) => {
       numberOfPeople : numberOfPeople.length,
       averageMonth:
         planAnalysis.length == 0
-          ? null
+          ? 0
           : Math.round(planAnalysis[0].averageMonth),
-      earnings: planAnalysis.length == 0 ? null : planAnalysis[0].fee,
+      earnings: planAnalysis.length == 0 ? 0 : planAnalysis[0].fee,
     });
   } catch (error) {
     console.log("err", error);
