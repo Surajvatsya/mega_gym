@@ -254,7 +254,7 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
 
     let updateFields = {
       currentBeginDate: req.body.currentBeginDate,
-      finishDate,
+      currentFinishDate: finishDate,
     };
 
     const updatedCustomer = await Customer.findByIdAndUpdate(
