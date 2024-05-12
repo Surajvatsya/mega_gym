@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import { Request } from 'express';
 
 export interface SignUpRequest {
     ownerName: String,

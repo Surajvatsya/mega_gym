@@ -1,21 +1,24 @@
-const router = express.Router();
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
-const Customer = require("../model/customer");
-const verifyToken = require("../middleware/jwt");
-const Plan = require("../model/plan");
-const Utils = require("../utils");
 import express, { Request, Response } from 'express';
-import Owner from '../model/owner';
+const bcrypt = require("bcrypt");
+const Customer = require("../model/customer");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
+const Plan = require("../model/plan");
+const router = express.Router();
+const verifyToken = require("../middleware/jwt");
+import { AnalysisResponse, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, SignUpResponse } from '../../responses';
+import { getMonthFromNumber } from "../utils";
 import { SignUpRequest, LoginRequest, JWToken } from '../../requests';
+import Owner from '../model/owner';
+require("dotenv").config();
 
-router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response) => {
+router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response<SignUpResponse>) => {
     console.log(req.body);
     bcrypt.hash(req.body.password, 10, (err: any, hash: any) => {
         if (err) {
             return res.status(500).json({
+                new_owner: null,
+                token: null,
                 error: err,
             });
         } else {
@@ -42,7 +45,7 @@ router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response) => {
                                 email: req.body.email,
                                 contact: req.body.contact,
                             },
-                            process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
+                            process.env.JWT_TOKEN,
                             {
                                 expiresIn: "10000000000hr",
                             },
@@ -50,12 +53,15 @@ router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response) => {
                         res.status(200).json({
                             new_owner: result,
                             token: token,
+                            error: null
                         });
                     }
                 })
                 .catch((err: any) => {
                     console.log(err);
                     res.status(500).json({
+                        new_owner: null,
+                        token: null,
                         error: err,
                     });
                 });
@@ -63,19 +69,27 @@ router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response) => {
     });
 });
 
-router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response) => {
+router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse, {}>) => {
     Owner.find({ email: req.body.email })
         .exec()
         .then((owners) => {
             if (owners.length < 1) {
                 return res.status(404).json({
-                    msg: "Gym Owner not found",
+                    name: null,
+                    contact: null,
+                    email: null,
+                    token: null,
+                    error: "password matching failed",
                 });
             }
-            bcrypt.compare(req.body.password, owners[0].password, (err, result) => {
+            bcrypt.compare(req.body.password, owners[0].password, (err: any, result: any) => {
                 if (!result) {
                     return res.status(401).json({
-                        msg: "password matching failed",
+                        name: null,
+                        contact: null,
+                        email: null,
+                        token: null,
+                        error: "password matching failed",
                     });
                 }
                 if (result) {
@@ -98,24 +112,30 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response) => {
                     );
 
                     res.status(200).json({
-                        owner: owners[0].name,
+                        name: owners[0].name ?? null,
                         contact: owners[0].contact,
-                        email: owners[0].email,
+                        email: owners[0].email ?? null,
                         token: token,
+                        error: null,
                     });
                 }
             });
         })
         .catch((err) => {
             res.status(500).json({
+                name: null,
+                contact: null,
+                email: null,
+                token: null,
                 error: err,
             });
         });
 });
 
-router.get("/analysis", verifyToken, async (req: any, res) => {
+router.get("/analysis", verifyToken, async (req: any, res: Response<AnalysisResponse>) => {
     try {
-        const gymOwnerId = new mongoose.Types.ObjectId(req.jwt.ownerId);
+        const jwToken: JWToken = req.jwt;
+        const gymOwnerId = new mongoose.Types.ObjectId(jwToken.ownerId);
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth() + 1;
         const currentYear = currentDate.getFullYear();
@@ -125,7 +145,7 @@ router.get("/analysis", verifyToken, async (req: any, res) => {
                 $match: {
                     gymId: gymOwnerId,
                     $expr: {
-                        $and: [ //performs logical and for all 
+                        $and: [
                             {
                                 $eq: [
                                     {
@@ -198,7 +218,7 @@ router.get("/analysis", verifyToken, async (req: any, res) => {
 
 
         const gender = genderRatio.reduce(
-            (acc, ele) => {
+            (acc: any, ele: any) => {
                 if (ele._id == "Male") {
                     acc.Male = ele.count;
                 } else {
@@ -260,28 +280,37 @@ router.get("/analysis", verifyToken, async (req: any, res) => {
         });
     } catch (error) {
         console.log("err", error);
+        res.status(200).json({
+            males: 0,
+            females: 0,
+            numberOfPeople: 0,
+            averageMonth: 0,
+            earnings: 0
+        });
     }
 });
 
-router.get("/getUpiId", verifyToken, async (req: any, res) => {
+router.get("/getUpiId", verifyToken, async (req: any, res: Response<GetUPIIdResponse>) => {
     try {
         const ownerId = req.jwt.ownerId;
         const owner = await Owner.findById(ownerId);
         if (!owner) {
             res.status(404).json({
                 upiId: "",
+                error: null,
             });
         } else {
-            res.status(200).json({ upiId: owner.upiId });
+            res.status(200).json({ upiId: owner.upiId ?? "", error: null });
         }
     } catch (err) {
-        console.log("Error ", err);
-        res.status(500).json({ error: "internal server error" });
+        console.log("Error came from getUPIId",err);
+        res.status(500).json({ error: "Internal Server Error", upiId: "" });
     }
 });
 
-router.post("/analysis/:key", verifyToken, async (req: any, res) => {
+router.post("/analysis/:key", verifyToken, async (req: any, res: Response<ExpandedAnalysisResponse>) => {
     try {
+        const jwToken: JWToken = req.jwt
         const currentDate = new Date();
         const keys = [
             currentDate.getMonth() - 3,
@@ -289,7 +318,7 @@ router.post("/analysis/:key", verifyToken, async (req: any, res) => {
             currentDate.getMonth() - 1,
             currentDate.getMonth(),
         ];
-        const plans = await Plan.find({ gymId: req.jwt.ownerId });
+        const plans = await Plan.find({ gymId: jwToken.ownerId });
 
         var total = 0;
         var maxValue = 0;
@@ -297,18 +326,18 @@ router.post("/analysis/:key", verifyToken, async (req: any, res) => {
         if (req.params.key == "earnings") {
             const values = keys.map((month) => {
                 const plansForMonth = plans.filter(
-                    (plan) => new Date(plan.startDate).getMonth() === month,
+                    (plan: any) => new Date(plan.startDate).getMonth() === month,
                 );
                 const valuesForMonth = plansForMonth.reduce(
-                    (total, plan) => total + plan.fee,
+                    (total: any, plan: any) => total + plan.fee,
                     0,
                 );
                 total = total + valuesForMonth;
                 maxValue = maxValue < valuesForMonth ? valuesForMonth : maxValue;
                 return valuesForMonth;
             });
-            const responseObject = {
-                titles: keys.map((number) => Utils.getMonthFromNumber(number)),
+            const responseObject: ExpandedAnalysisResponse = {
+                titles: keys.map((number) => getMonthFromNumber(number)),
                 data: values,
                 average: (total / keys.length).toString(),
                 total: total.toString(),
@@ -320,7 +349,7 @@ router.post("/analysis/:key", verifyToken, async (req: any, res) => {
             console.log(plans);
             const values = keys.map((month) => {
                 const valuesForMonth = plans.filter(
-                    (plan) =>
+                    (plan: any) =>
                         new Date(plan.startDate).getMonth() <= month &&
                         new Date(plan.endDate).getMonth() >= month,
                 ).length;
@@ -328,8 +357,8 @@ router.post("/analysis/:key", verifyToken, async (req: any, res) => {
                 maxValue = maxValue < valuesForMonth ? valuesForMonth : maxValue;
                 return valuesForMonth;
             });
-            const responseObject = {
-                titles: keys.map((number) => Utils.getMonthFromNumber(number)),
+            const responseObject: ExpandedAnalysisResponse = {
+                titles: keys.map((number) => getMonthFromNumber(number)),
                 data: values,
                 average: (total / keys.length).toString(),
                 total: total.toString(),
@@ -345,12 +374,13 @@ router.post("/analysis/:key", verifyToken, async (req: any, res) => {
 });
 
 router.put("/upiId", verifyToken, async (req: any, res) => {
+    const jwtoken: JWToken = req.jwtl
     await Owner.findByIdAndUpdate(
-        req.jwt.ownerId,
+        jwtoken.ownerId,
         { upiId: req.body.upiId },
         { new: true },
     );
-    const owner = await Owner.findById(req.jwt.ownerId);
+    const owner = await Owner.findById(jwtoken.ownerId);
     res.status(200).json(owner);
 });
 
