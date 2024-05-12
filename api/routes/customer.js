@@ -239,6 +239,10 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
     req.body.validTill,
   );
 
+  console.log("finish date is",finishDate)
+  console.log("req.body.currentBeginDates",req.body.currentBeginDate)
+  console.log("req.body.validTill",req.body.validTill)
+
   try {
     const customerId = req.params.customerId;
     const newPlan = new Plan({
