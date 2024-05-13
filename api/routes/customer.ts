@@ -1,22 +1,21 @@
-const express = require("express");
-const router = express.Router();
+import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest } from "../../requests";
+import { GetCustomerProfileResponse, GetCustomersResponse } from "../../responses";
 const mongoose = require("mongoose");
-const Customer = require("../model/customer");
+import Customer from '../model/customer'
+import Plan from '../model/plan'
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
-const {
-  convertUtcToLongDateFormat,
-  addValidTillToCurrDate,
-} = require("../utils");
-require("dotenv").config();
+import { addValidTillToCurrDate } from '../utils'
+import express, { Request, Response } from 'express';
 
-const Plan = require("../model/plan");
+require("dotenv").config();
+const router = express.Router();
 
 // future usecase
-router.post("/signup", (req, res) => {
+router.post("/signup", (req: any, res: any) => {
   console.log(req.body);
-  bcrypt.hash(req.body.password, 10, (err, hash) => {
+  bcrypt.hash(req.body.password, 10, (err: any, hash: string) => {
     if (err) {
       return res.status(500).json({
         error: err,
@@ -70,7 +69,7 @@ router.post("/login", (req, res) => {
         req.body.password,
         customer[0].password,
       );
-      bcrypt.compare(req.body.password, customer[0].password, (err, result) => {
+      bcrypt.compare(req.body.password, customer[0].password, (err: any, result: any) => {
         if (!result) {
           return res.status(401).json({
             msg: "password matching failed",
@@ -79,10 +78,9 @@ router.post("/login", (req, res) => {
         if (result) {
           const token = jwt.sign(
             {
-              name: customer[0].customerName,
+              name: customer[0].name,
               email: customer[0].email,
               contact: customer[0].contact,
-              userType: customer[0].userType,
             },
             process.env.JWT_TOKEN,
             {
@@ -91,7 +89,6 @@ router.post("/login", (req, res) => {
           );
           res.status(200).json({
             customer: customer[0].name,
-            userType: customer[0].userType,
             contact: customer[0].contact,
             email: customer[0].email,
             token: token,
@@ -107,9 +104,10 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/getCustomers", verifyToken, async (req, res) => {
+router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCustomersResponse>) => {
   try {
-    const gymOwnerId = req.jwt.ownerId;
+    const jwToken: JWToken = req.jwt;
+    const gymOwnerId = jwToken.ownerId;
     const customers = await Customer.find({ gymId: gymOwnerId });
     const today = new Date();
 
@@ -120,12 +118,13 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
     });
 
     const parseCurrDate = new Date(currentDate);
-    const groupedData = customers.reduce(
-      (acc, customer) => {
+
+    const groupedData: GetCustomersResponse = customers.reduce(
+      (acc: GetCustomersResponse, customer) => {
         const parseFinishdate = new Date(customer.currentFinishDate);
         if (parseFinishdate >= parseCurrDate) {
           const expiryIndays =
-            (parseFinishdate - parseCurrDate) / (1000 * 60 * 60 * 24);
+            (parseFinishdate.getTime() - parseCurrDate.getTime()) / (1000 * 60 * 60 * 24);
           acc.current.push({
             id: customer.id,
             customerName: customer.name,
@@ -137,8 +136,9 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
             email: customer.email,
             currentBeginDate: customer.currentBeginDate,
             currentFinishDate: customer.currentFinishDate,
-            gymId: customer.gymId,
+            gymId: customer.gymId.toString(),
             expiring: expiryIndays <= 10 ? expiryIndays : null,
+            expired: null
           });
         } else {
           acc.expired.push({
@@ -152,8 +152,9 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
             email: customer.email,
             currentBeginDate: customer.currentBeginDate,
             currentFinishDate: customer.currentFinishDate,
-            gymId: customer.gymId,
-            expired: (parseCurrDate - parseFinishdate) / (1000 * 60 * 60 * 24),
+            gymId: customer.gymId.toString(),
+            expired: (parseFinishdate.getTime() - parseCurrDate.getTime()) / (1000 * 60 * 60 * 24),
+            expiring: null
           });
         }
         return acc;
@@ -163,45 +164,46 @@ router.get("/getCustomers", verifyToken, async (req, res) => {
 
     res.status(200).json(groupedData);
   } catch (err) {
-    // Handle error
     console.error("Error:", err);
-    // res.createHomePageRes()
-    return res.status(500).json({ error: err });
+    return res.status(500).json({ current: [], expired: [] });
   }
 });
 
-router.post("/registerCustomer", verifyToken, async (req, res) => {
+router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
   try {
     const customerId = new mongoose.Types.ObjectId();
+    const requestBody: RegisterCustomerRequest = req.body
+    const jwToken: JWToken = req.jwt
+
     const newPlan = new Plan({
       _id: new mongoose.Types.ObjectId(),
-      gymId: req.jwt.ownerId,
+      gymId: jwToken.ownerId,
       customerId: customerId,
-      duration: req.body.validTill,
-      fee: req.body.charges,
-      startDate: req.body.currentBeginDate,
+      duration: requestBody.validTill,
+      fee: requestBody.charges,
+      startDate: requestBody.currentBeginDate,
       endDate: addValidTillToCurrDate(
-        req.body.currentBeginDate,
-        req.body.validTill,
+        requestBody.currentBeginDate,
+        requestBody.validTill,
       ),
     });
 
     const customer = new Customer({
       _id: customerId,
-      name: req.body.customerName,
-      email: req.body.email,
-      contact: req.body.contact,
-      address: req.body.address,
-      age: req.body.age,
-      gender: req.body.gender,
-      bloodGroup: req.body.bloodGroup,
-      currentBeginDate: req.body.currentBeginDate,
+      name: requestBody.customerName,
+      email: requestBody.email,
+      contact: requestBody.contact,
+      address: requestBody.address,
+      age: requestBody.age,
+      gender: requestBody.gender,
+      bloodGroup: requestBody.bloodGroup,
+      currentBeginDate: requestBody.currentBeginDate,
       currentFinishDate: addValidTillToCurrDate(
-        req.body.currentBeginDate,
-        req.body.validTill,
+        requestBody.currentBeginDate,
+        requestBody.validTill,
       ),
-      gymName: req.body.gymName,
-      gymId: req.jwt.ownerId,
+      gymName: requestBody.gymName,
+      gymId: jwToken.ownerId,
     });
 
     const [planResult, customerResult] = await Promise.all([
@@ -214,29 +216,67 @@ router.post("/registerCustomer", verifyToken, async (req, res) => {
       .json({ new_plan: planResult, new_customer: customerResult });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "err.message" });
   }
 });
 
-router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res) => {
+router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Response<GetCustomerProfileResponse>) => {
   try {
     const customerId = req.params.customerId;
     const customer = await Customer.findById(customerId);
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({
+        gymId: null,
+        name: null,
+        age: null,
+        gender: null,
+        bloodGroup: null,
+        address: null,
+        contact: null,
+        email: null,
+        currentBeginDate: null,
+        currentFinishDate: null,
+
+        error: "Customer not found"
+      });
     }
-    res.status(200).json(customer);
+    res.status(200).json({
+      gymId: customer.gymId.toString(),
+      name: customer.name,
+      age: customer.age,
+      gender: customer.gender,
+      bloodGroup: customer.bloodGroup,
+      address: customer.address,
+      contact: customer.contact,
+      email: customer.email,
+      currentBeginDate: customer.currentBeginDate,
+      currentFinishDate: customer.currentFinishDate,
+      error: null
+    });
   } catch (err) {
-    // Handle error
     console.error("Error:", err);
-    return res.status(500).json({ error: "'Internal Server Error'" });
+    return res.status(500).json({
+      gymId: null,
+      name: null,
+      age: null,
+      gender: null,
+      bloodGroup: null,
+      address: null,
+      contact: null,
+      email: null,
+      currentBeginDate: null,
+      currentFinishDate: null, error: "'Internal Server Error'"
+    });
   }
 });
 
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
+
+  const requestBody: updateSubscriptionRequest = req.body;
+
   let finishDate = addValidTillToCurrDate(
-    req.body.currentBeginDate,
-    req.body.validTill,
+    requestBody.currentBeginDate,
+    requestBody.validTill,
   );
 
   try {
@@ -244,16 +284,16 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
     const newPlan = new Plan({
       _id: new mongoose.Types.ObjectId(),
       customerId: customerId,
-      duration: req.body.validTill,
-      fee: req.body.charges,
-      startDate: req.body.currentBeginDate,
+      duration: requestBody.validTill,
+      fee: requestBody.charges,
+      startDate: requestBody.currentBeginDate,
       endDate: finishDate,
     });
 
     const createPlan = await newPlan.save();
 
     let updateFields = {
-      currentBeginDate: req.body.currentBeginDate,
+      currentBeginDate: requestBody.currentBeginDate,
       currentFinishDate: finishDate,
     };
 

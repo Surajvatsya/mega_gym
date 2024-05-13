@@ -8,13 +8,13 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const { urlencoded, json } = require("body-parser");
 const cors = require("cors");
+
 const dbUrl =
   "mongodb+srv://surajkumar742494:J9qYedaef8h5WbSg@gym.ftaj8yk.mongodb.net/?retryWrites=true&w=majority&appName=GYM";
-const isDeveloperMode = true;
 
 mongoose.connect(dbUrl);
 
-mongoose.connection.on("error", (err) => {
+mongoose.connection.on("error", (err: any) => {
   console.log("connection failed");
 });
 
@@ -31,6 +31,5 @@ app.use("/customer", customerRoute);
 app.use("/owner", ownerRoute);
 app.use("/whatsapp", messageRoute);
 app.use("/notification", notificationRoute);
-// app.use("/qrCode", qrCode);
 
-module.exports = app;
+export default app;
