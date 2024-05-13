@@ -17,10 +17,8 @@ export function addValidTillToCurrDate(currentBeginDate: string, validTill: numb
         Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
     };
     const monthNumber = monthNameAndNumber[month];
-
     const date = new Date(parseInt(year), monthNumber, parseInt(day));
     date.setMonth(date.getMonth() + validTill);
-
     return date.toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
@@ -29,7 +27,7 @@ export function addValidTillToCurrDate(currentBeginDate: string, validTill: numb
 };
 
 
-export function getMonthFromNumber(number: number) {
+export function getMonthFromNumber(number: number): string {
     const currentDate = new Date();
     return new Date(currentDate.getFullYear(), number).toLocaleString("en-US", {
         month: "long",

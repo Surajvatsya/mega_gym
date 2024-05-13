@@ -23,3 +23,24 @@ export interface JWToken {
     email: String,
     contact: String,
 }
+
+export interface RegisterCustomerRequest {
+    jwt: JWToken,
+    customerName: string;
+    email: string;
+    contact: string;
+    address: string;
+    age: number;
+    gender: string;
+    bloodGroup: string;
+    currentBeginDate: string;
+    validTill: number;
+    charges: number;
+    gymName: string;
+}
+
+export interface updateSubscriptionRequest {
+    currentBeginDate: string,
+    validTill: number,
+    charges: number
+}

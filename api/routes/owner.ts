@@ -3,17 +3,17 @@ const bcrypt = require("bcrypt");
 const Customer = require("../model/customer");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-const Plan = require("../model/plan");
-const router = express.Router();
 const verifyToken = require("../middleware/jwt");
 import { AnalysisResponse, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, SignUpResponse } from '../../responses';
 import { getMonthFromNumber } from "../utils";
 import { SignUpRequest, LoginRequest, JWToken } from '../../requests';
 import Owner from '../model/owner';
+import Plan from '../model/plan'
+
 require("dotenv").config();
+const router = express.Router();
 
 router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response<SignUpResponse>) => {
-    console.log(req.body);
     bcrypt.hash(req.body.password, 10, (err: any, hash: any) => {
         if (err) {
             return res.status(500).json({
@@ -303,7 +303,7 @@ router.get("/getUpiId", verifyToken, async (req: any, res: Response<GetUPIIdResp
             res.status(200).json({ upiId: owner.upiId ?? "", error: null });
         }
     } catch (err) {
-        console.log("Error came from getUPIId",err);
+        console.log("Error came from getUPIId", err);
         res.status(500).json({ error: "Internal Server Error", upiId: "" });
     }
 });

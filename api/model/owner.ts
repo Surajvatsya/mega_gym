@@ -35,6 +35,6 @@ const ownerSchema: Schema = new Schema({
     deviceToken: String,
 });
 
-const Owner = mongoose.model<Owner>('Owner', ownerSchema);
+const Owner = mongoose.model<Owner>('owner', ownerSchema);
 
 export default Owner;
