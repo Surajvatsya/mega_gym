@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 const bcrypt = require("bcrypt");
-const Customer = require("../model/customer");
+import Customer from "../model/customer";
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const verifyToken = require("../middleware/jwt");
