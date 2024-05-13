@@ -12,7 +12,8 @@ export interface LoginResponse {
     email: String | null,
     token: JWToken | null,
     error: any | null,
-    name: String | null
+    name: String | null,
+    deviceToken: String | null
 }
 
 export interface AnalysisResponse {

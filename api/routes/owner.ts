@@ -79,6 +79,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                     contact: null,
                     email: null,
                     token: null,
+                    deviceToken: null,
                     error: "password matching failed",
                 });
             }
@@ -89,6 +90,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         contact: null,
                         email: null,
                         token: null,
+                        deviceToken: null,
                         error: "password matching failed",
                     });
                 }
@@ -105,17 +107,19 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         },
                     );
 
-                    Owner.findByIdAndUpdate(
-                        owners[0].id,
+                    const response = Owner.findOneAndUpdate(
+                        { _id: owners[0]._id },
                         { deviceToken: req.body.deviceToken },
-                        { new: true },
+                        { new: true }
                     );
+
 
                     res.status(200).json({
                         name: owners[0].name ?? null,
                         contact: owners[0].contact,
                         email: owners[0].email ?? null,
                         token: token,
+                        deviceToken: req.body.deviceToken,
                         error: null,
                     });
                 }
@@ -127,6 +131,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                 contact: null,
                 email: null,
                 token: null,
+                deviceToken: null,
                 error: err,
             });
         });
