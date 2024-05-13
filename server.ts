@@ -32,7 +32,9 @@ function pushNotification(deviceToken: String, title: String, body: String) {
         });
 }
 
-const reminderJob = cron.schedule("0 8 * * * *", async () => {
+// for every 5 seconds */5 * * * * *
+// for 8 am 0 8 * * * *
+const reminderJob = cron.schedule("*/1 * * * * *", async () => {
     const customers = await Customer.find({}).exec();
 
     customers.forEach(async (customer: any) => {

@@ -107,11 +107,17 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         },
                     );
 
-                    const response = Owner.findOneAndUpdate(
+                    Owner.findOneAndUpdate(
                         { _id: owners[0]._id },
                         { deviceToken: req.body.deviceToken },
-                        { new: true }
-                    );
+                    ).then((docs) => {
+                        if (docs) {
+                            console.log(docs);
+                        }
+                        else{
+                            console.log("error");
+                        }
+                    });
 
 
                     res.status(200).json({
