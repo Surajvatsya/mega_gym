@@ -153,7 +153,7 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
             currentBeginDate: customer.currentBeginDate,
             currentFinishDate: customer.currentFinishDate,
             gymId: customer.gymId.toString(),
-            expired: (parseFinishdate.getTime() - parseCurrDate.getTime()) / (1000 * 60 * 60 * 24),
+            expired: (parseCurrDate.getTime() - parseFinishdate.getTime()) / (1000 * 60 * 60 * 24),
             expiring: null
           });
         }
