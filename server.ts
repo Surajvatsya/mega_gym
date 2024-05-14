@@ -3,7 +3,7 @@ import app from './app'
 const http = require("http");
 require("dotenv").config();
 const cron = require("node-cron");
-const Customer = require("./api/model/customer");
+import Customer from "./api/model/customer";
 const admin = require("firebase-admin");
 
 const serviceAccount = require("./notification.json");
@@ -35,27 +35,33 @@ function pushNotification(deviceToken: String, title: String, body: String) {
 // for every 5 seconds */5 * * * * *
 // for 8 am 0 8 * * * *
 const reminderJob = cron.schedule("0 8 * * * *", async () => {
-    const customers = await Customer.find({}).exec();
 
-    customers.forEach(async (customer: any) => {
-        const finishDate = new Date(customer.currentFinishDate);
-        const currentDate = new Date();
+    Customer.find().exec().then((customers) => {
 
-        if (
-            currentDate.getDate() == finishDate.getDate() &&
-            currentDate.getMonth() == finishDate.getMonth() &&
-            currentDate.getFullYear() == finishDate.getFullYear()
-        ) {
-            const owner: Owner | null = await Owner.findById(customer.gymId).exec();
+        customers.forEach(async (customer) => {
+            const finishDate = new Date(customer.currentFinishDate);
+            const currentDate = new Date();
+            
+            if (
+                currentDate.getDate() == finishDate.getDate() &&
+                currentDate.getMonth() == finishDate.getMonth() &&
+                currentDate.getFullYear() == finishDate.getFullYear()
+            ) {
+                Owner.findById(customer.gymId).exec().then((owner) => {
 
-            if (owner) {
-                const title = `Hello ${owner.name}`;
-                const body = `Subscription of ${customer.name} has ended`;
-                pushNotification(owner.deviceToken, title, body);
-                console.log(title);
-                console.log(body);
+
+                    if (owner) {
+                        const title = `Subscription of ${customer.name} has ended` ;
+                        const body = `Hello ${owner.name}, Subscription of ${customer.name} has ended`;
+                        pushNotification(owner.deviceToken, title, body);
+                        console.log(title);
+                        console.log(body);
+                    }
+                });
+
+
             }
-        }
+        })
     });
 });
 
