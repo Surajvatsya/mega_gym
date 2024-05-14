@@ -1,7 +1,7 @@
+require("dotenv").config();
 import Owner from "./api/model/owner";
 import app from './app'
 const http = require("http");
-require("dotenv").config();
 const cron = require("node-cron");
 import Customer from "./api/model/customer";
 const admin = require("firebase-admin");
@@ -67,7 +67,7 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
 
 reminderJob.start();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 const server = http.createServer(app);
 server.listen(port, () => {
