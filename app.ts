@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const customerRoute = require("./api/routes/customer");
@@ -9,10 +10,9 @@ const bodyParser = require("body-parser");
 const { urlencoded, json } = require("body-parser");
 const cors = require("cors");
 
-const dbUrl =
-  "mongodb+srv://surajkumar742494:J9qYedaef8h5WbSg@gym.ftaj8yk.mongodb.net/?retryWrites=true&w=majority&appName=GYM";
-
-mongoose.connect(dbUrl);
+//NOTE :- Later in PROD change IP address of MONGODB to accept only from our BE server
+// add inbound rules in security group
+mongoose.connect(process.env.DB_URL);
 
 mongoose.connection.on("error", (err: any) => {
   console.log("connection failed");
@@ -26,7 +26,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(cors());
-
+app.get("/",(req:any,res:any)=>{
+  res.status(200).json({
+    message: "Server is up and running",
+  });
+})
 app.use("/customer", customerRoute);
 app.use("/owner", ownerRoute);
 app.use("/whatsapp", messageRoute);
