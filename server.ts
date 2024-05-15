@@ -41,15 +41,15 @@ function midnightTime(date: Date): Date {
 // for 8 am 0 8 * * * *
 const reminderJob = cron.schedule("0 8 * * * *", async () => {
 
-    Customer.find().exec().then((customers) => {
+    Customer.find().exec().then((customers:any) => {
 
-        customers.forEach(async (customer) => {
+        customers.forEach(async (customer:any) => {
             const finishDate = new Date(customer.currentFinishDate);
             const currentDate = new Date();
             let timeDifference = (midnightTime(currentDate).getTime() - midnightTime(new Date(finishDate)).getTime()) / (1000 * 60 * 60 * 24);
 
             if (timeDifference >= 0 && timeDifference <= 2) {
-                Owner.findById(customer.gymId).exec().then((owner) => {
+                Owner.findById(customer.gymId).exec().then((owner:any) => {
 
                     if (owner && owner.deviceToken) {
                         const title = `Subscription of ${customer.name} has ended`;
