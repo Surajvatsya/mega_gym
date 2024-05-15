@@ -5,8 +5,11 @@ const http = require("http");
 const cron = require("node-cron");
 import Customer from "./api/model/customer";
 const admin = require("firebase-admin");
+var cors = require('cors')
 
 const serviceAccount = require("./notification.json");
+
+app.use(cors());
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
