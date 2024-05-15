@@ -32,6 +32,11 @@ function pushNotification(deviceToken: String, title: String, body: String) {
         });
 }
 
+function midnightTime(date: Date): Date {
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
 // for every 5 seconds */5 * * * * *
 // for 8 am 0 8 * * * *
 const reminderJob = cron.schedule("0 8 * * * *", async () => {
@@ -41,17 +46,13 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
         customers.forEach(async (customer) => {
             const finishDate = new Date(customer.currentFinishDate);
             const currentDate = new Date();
-            
-            if (
-                currentDate.getDate() == finishDate.getDate() &&
-                currentDate.getMonth() == finishDate.getMonth() &&
-                currentDate.getFullYear() == finishDate.getFullYear()
-            ) {
+            let timeDifference = (midnightTime(currentDate).getTime() - midnightTime(new Date(finishDate)).getTime()) / (1000 * 60 * 60 * 24);
+
+            if (timeDifference >= 0 && timeDifference <= 2) {
                 Owner.findById(customer.gymId).exec().then((owner) => {
 
-
-                    if (owner) {
-                        const title = `Subscription of ${customer.name} has ended` ;
+                    if (owner && owner.deviceToken) {
+                        const title = `Subscription of ${customer.name} has ended`;
                         const body = `Hello ${owner.name}, Subscription of ${customer.name} has ended`;
                         pushNotification(owner.deviceToken, title, body);
                         console.log(title);
