@@ -1,7 +1,7 @@
 module.exports = {
   apps : [{
-    script: 'npm start',
+    script: 'nodemon server.ts',
     watch: '.'
   }
-],
+  ],
 };

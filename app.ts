@@ -4,10 +4,10 @@ const app = express();
 const customerRoute = require("./api/routes/customer");
 const ownerRoute = require("./api/routes/owner");
 const messageRoute = require("./api/routes/message");
+const awsRoute = require("./api/routes/aws")
 const notificationRoute = require("./api/routes/firebase");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const { urlencoded, json } = require("body-parser");
 const cors = require("cors");
 
 //NOTE :- Later in PROD change IP address of MONGODB to accept only from our BE server
@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(cors());
-app.get("/",(req:any,res:any)=>{
+app.get("/", (req: any, res: any) => {
   res.status(200).json({
     message: "Server is up and running",
   });
@@ -35,5 +35,6 @@ app.use("/customer", customerRoute);
 app.use("/owner", ownerRoute);
 app.use("/whatsapp", messageRoute);
 app.use("/notification", notificationRoute);
+app.use("/aws", awsRoute);
 
 export default app;
