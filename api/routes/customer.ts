@@ -162,6 +162,14 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
       { current: [], expired: [] },
     );
 
+    groupedData.current.sort(function (a, b) {
+      return (a.expiring ?? Infinity) - (b.expiring ?? Infinity)
+    })
+
+    groupedData.expired.sort(function (a, b) {
+      return (a.expired ?? 0) - (b.expired ?? 0);
+    })
+
     res.status(200).json(groupedData);
   } catch (err) {
     console.error("Error:", err);
