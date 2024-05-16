@@ -1,3 +1,6 @@
+import { S3Bucket } from '../configs';
+
+
 export function convertUtcToLongDateFormat(utcTime: Date): string {
     const indianDate = utcTime.toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
@@ -34,3 +37,20 @@ export function getMonthFromNumber(number: number): string {
     });
 }
 
+export async function getProfilePic(customerId: string): Promise<string | null> {
+
+    const params = {
+        Bucket: process.env.S3_BUCKET_NAME ?? "",
+        Key: customerId
+    };
+
+    try {
+        await S3Bucket.headObject(params).promise();
+        return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${customerId}`;
+    } catch (err: any) {
+        if (err.code === 'NotFound') {
+            return null;
+        }
+        throw err; // re-throw other errors
+    }
+}

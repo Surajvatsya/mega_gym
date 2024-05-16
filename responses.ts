@@ -37,7 +37,7 @@ export interface GetUPIIdResponse {
     error: String | null
 }
 
-interface CustomerDetails {
+export interface CustomerDetails {
     id: string,
     customerName: string,
     age: number,
@@ -50,7 +50,8 @@ interface CustomerDetails {
     currentFinishDate: string,
     gymId: string,
     expiring: number | null
-    expired: number | null
+    expired: number | null,
+    profilePic: String | null
 }
 
 export interface GetCustomersResponse {
@@ -69,5 +70,6 @@ export interface GetCustomerProfileResponse {
     email: string | null,
     currentBeginDate: string | null,
     currentFinishDate: string | null,
-    error: string | null
+    error: string | null,
+    profilePic : string | null
 }
