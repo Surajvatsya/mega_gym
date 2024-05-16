@@ -23,7 +23,7 @@ mongoose.connection.on("connected", () => {
 });
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: "5mb"}));
 
 app.use(cors());
 app.get("/", (req: any, res: any) => {

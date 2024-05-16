@@ -1,12 +1,12 @@
 import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest } from "../../requests";
-import { GetCustomerProfileResponse, GetCustomersResponse } from "../../responses";
+import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
 import Plan from '../model/plan'
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
-import { addValidTillToCurrDate } from '../utils'
+import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3 } from '../utils'
 import express, { Request, Response } from 'express';
 
 require("dotenv").config();
@@ -119,48 +119,45 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
 
     const parseCurrDate = new Date(currentDate);
 
-    const groupedData: GetCustomersResponse = customers.reduce(
-      (acc: GetCustomersResponse, customer) => {
-        const parseFinishdate = new Date(customer.currentFinishDate);
-        if (parseFinishdate >= parseCurrDate) {
-          const expiryIndays =
-            (parseFinishdate.getTime() - parseCurrDate.getTime()) / (1000 * 60 * 60 * 24);
-          acc.current.push({
-            id: customer.id,
-            customerName: customer.name,
-            age: customer.age,
-            gender: customer.gender,
-            bloodGroup: customer.bloodGroup,
-            address: customer.address,
-            contact: customer.contact,
-            email: customer.email,
-            currentBeginDate: customer.currentBeginDate,
-            currentFinishDate: customer.currentFinishDate,
-            gymId: customer.gymId.toString(),
-            expiring: expiryIndays <= 10 ? expiryIndays : null,
-            expired: null
-          });
-        } else {
-          acc.expired.push({
-            id: customer.id,
-            customerName: customer.name,
-            age: customer.age,
-            gender: customer.gender,
-            bloodGroup: customer.bloodGroup,
-            address: customer.address,
-            contact: customer.contact,
-            email: customer.email,
-            currentBeginDate: customer.currentBeginDate,
-            currentFinishDate: customer.currentFinishDate,
-            gymId: customer.gymId.toString(),
-            expired: (parseCurrDate.getTime() - parseFinishdate.getTime()) / (1000 * 60 * 60 * 24),
-            expiring: null
-          });
-        }
-        return acc;
-      },
-      { current: [], expired: [] },
-    );
+    const groupedData: GetCustomersResponse = { current: [], expired: [] };
+    const profilePicPromises: Promise<string | null | void>[] = [];
+
+    for (const customer of customers) {
+      const parseFinishdate = new Date(customer.currentFinishDate);
+      const expiryIndays =
+        (parseFinishdate.getTime() - parseCurrDate.getTime()) / (1000 * 60 * 60 * 24);
+
+      const customerData: CustomerDetails = {
+        id: customer.id,
+        customerName: customer.name,
+        age: customer.age,
+        gender: customer.gender,
+        bloodGroup: customer.bloodGroup,
+        address: customer.address,
+        contact: customer.contact,
+        email: customer.email,
+        currentBeginDate: customer.currentBeginDate,
+        currentFinishDate: customer.currentFinishDate,
+        gymId: customer.gymId.toString(),
+        expiring: expiryIndays <= 10 ? expiryIndays : null,
+        expired: expiryIndays > 0 ? null : Math.abs(expiryIndays),
+        profilePic: null
+      };
+
+      profilePicPromises.push(getProfilePic(customer.id).then(profilePic => {
+        customerData.profilePic = profilePic;
+      }));
+
+
+
+      if (expiryIndays <= 0) {
+        groupedData.expired.push(customerData);
+      } else {
+        groupedData.current.push(customerData);
+      }
+    }
+
+    await Promise.all(profilePicPromises);
 
     groupedData.current.sort(function (a, b) {
       return (a.expiring ?? Infinity) - (b.expiring ?? Infinity)
@@ -214,17 +211,18 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       gymId: jwToken.ownerId,
     });
 
-    const [planResult, customerResult] = await Promise.all([
+    const [planResult, customerResult, profilePic] = await Promise.all([
       newPlan.save(),
       customer.save(),
+      uploadBase64(requestBody.profilePic ?? "", customerId.toString())
     ]);
 
     res
       .status(200)
       .json({ new_plan: planResult, new_customer: customerResult });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "err.message" });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -244,6 +242,7 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         email: null,
         currentBeginDate: null,
         currentFinishDate: null,
+        profilePic: null,
 
         error: "Customer not found"
       });
@@ -259,6 +258,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       email: customer.email,
       currentBeginDate: customer.currentBeginDate,
       currentFinishDate: customer.currentFinishDate,
+      profilePic: await getProfilePic(customer.id),
+
       error: null
     });
   } catch (err) {
@@ -273,6 +274,7 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       contact: null,
       email: null,
       currentBeginDate: null,
+      profilePic: null,
       currentFinishDate: null, error: "'Internal Server Error'"
     });
   }
@@ -328,6 +330,7 @@ router.delete("/deleteCustomer/:customerId", verifyToken, async (req, res) => {
   try {
     const customerId = req.params.customerId;
     const deletedCustomer = await Customer.findByIdAndDelete(customerId);
+    await deleteFromS3(customerId);
     if (!deletedCustomer)
       return res.status(404).json({ message: "Customer not found" });
     res.status(200).json({ deletedCustomer });

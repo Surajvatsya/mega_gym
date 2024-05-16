@@ -37,6 +37,7 @@ export interface RegisterCustomerRequest {
     validTill: number;
     charges: number;
     gymName: string;
+    profilePic: string | null
 }
 
 export interface updateSubscriptionRequest {

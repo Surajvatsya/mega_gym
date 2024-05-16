@@ -3,23 +3,17 @@ import multer from 'multer';
 import AWS from 'aws-sdk';
 const verifyToken = require("../middleware/jwt");
 import mime from 'mime-types';
+import { S3Bucket } from '../../configs';
 
 const router = express.Router();
 
 require('dotenv').config();
 
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
-})
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-router.post('/upload', verifyToken, upload.single('file'), (req:any, res) => {
+router.post('/upload', verifyToken, upload.single('file'), (req: any, res) => {
     const file = req.file;
-    console.log("uploading")
     if (!file) {
         return res.status(400).send('No file uploaded.');
     }
@@ -31,7 +25,7 @@ router.post('/upload', verifyToken, upload.single('file'), (req:any, res) => {
         ContentType: mime.lookup(file.originalname) || 'application/octet-stream'
     };
 
-    s3.upload(params, (err: any, data: any) => {
+    S3Bucket.upload(params, (err: any, data: any) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -50,7 +44,7 @@ router.delete('/delete', verifyToken, (req, res) => {
         Key: req.body.customerId
     };
 
-    s3.deleteObject(params, (err, data) => {
+    S3Bucket.deleteObject(params, (err, data) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -58,4 +52,25 @@ router.delete('/delete', verifyToken, (req, res) => {
     });
 });
 
+
+router.get('/image/:customerId', verifyToken, (req, res) => {
+    const { customerId } = req.params;
+
+    const params = {
+        Bucket: process.env.S3_BUCKET_NAME ?? "",
+        Key: customerId
+    };
+
+    S3Bucket.headObject(params, (err, data) => {
+        if (err) {
+            if (err.code === 'NotFound') {
+                return res.status(404).json({ message: 'Key not found' });
+            }
+            return res.status(500).json({ message: err.message });
+        }
+
+        const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${customerId}`;
+        return res.status(200).json({ url: url });
+    });
+});
 module.exports = router;

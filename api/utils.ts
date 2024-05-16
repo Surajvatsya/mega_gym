@@ -1,3 +1,6 @@
+import { S3Bucket } from '../configs';
+
+
 export function convertUtcToLongDateFormat(utcTime: Date): string {
     const indianDate = utcTime.toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
@@ -34,3 +37,62 @@ export function getMonthFromNumber(number: number): string {
     });
 }
 
+export async function getProfilePic(customerId: string): Promise<string | null> {
+
+    const params = {
+        Bucket: process.env.S3_BUCKET_NAME ?? "",
+        Key: customerId
+    };
+
+    try {
+        await S3Bucket.headObject(params).promise();
+        return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${customerId}?time=${Date.now()}`;
+    } catch (err: any) {
+        if (err.code === 'NotFound') {
+            return null;
+        }
+        throw err;
+    }
+}
+
+export async function uploadBase64(fileInBase64: string, customerId: string) {
+
+    const fileBuffer = Buffer.from(fileInBase64, 'base64');
+
+    const params = {
+        Bucket: process.env.S3_BUCKET_NAME ?? "",
+        Key: customerId,
+        ContentEncoding: 'base64',
+        Body: fileBuffer,
+        ContentType: 'image/jpeg'
+    };
+
+    try {
+        const data = await S3Bucket.upload(params).promise();
+        console.log("Upload successful:", data);
+        return data.Location;
+    } catch (error) {
+        console.error("Upload failed:", error);
+        throw error;
+    }
+}
+
+export function deleteFromS3(customerId: string) {
+    const params = {
+        Bucket: process.env.S3_BUCKET_NAME ?? "",
+        Key: customerId
+    };
+    try {
+        S3Bucket.deleteObject(params, (err, data) => {
+            if (err) {
+                return err.message
+            }
+            return 'File deleted successfully';
+        });
+        return 'File deleted successfully';
+    }
+    catch (e) {
+        return e;
+    }
+
+}
