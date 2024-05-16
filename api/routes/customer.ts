@@ -139,7 +139,7 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
         currentBeginDate: customer.currentBeginDate,
         currentFinishDate: customer.currentFinishDate,
         gymId: customer.gymId.toString(),
-        expiring: expiryIndays <= 10 ? expiryIndays : null,
+        expiring: expiryIndays <= 10 && expiryIndays > 0 ? expiryIndays : null,
         expired: expiryIndays > 0 ? null : Math.abs(expiryIndays),
         profilePic: null
       };
