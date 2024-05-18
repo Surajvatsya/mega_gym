@@ -28,7 +28,7 @@ app.use(bodyParser.json({limit: "5mb"}));
 app.use(cors());
 app.get("/", (req: any, res: any) => {
   res.status(200).json({
-    message: "Server is up and running",
+    message: "Nodejs server is up and running",
   });
 })
 app.use("/customer", customerRoute);
