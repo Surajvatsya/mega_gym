@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /home/ubuntu
+cd /home/ubuntu/mega_gym
 
 
 sudo apt-get -y update
