@@ -1,7 +1,8 @@
 module.exports = {
-  apps : [{
-    script: 'ts-node server.ts',
-    watch: '.'
-  }
+  apps: [
+    {
+      script: "ts-node server.ts",
+      watch: ".",
+    },
   ],
 };

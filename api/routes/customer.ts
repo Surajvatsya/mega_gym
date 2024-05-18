@@ -227,6 +227,74 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
   }
 });
 
+router.post("/registerBulkCustomer",verifyToken, async (req: any, res: any) =>{
+  try {
+  const jwToken: JWToken = req.jwt;
+
+  const newCustomers = req.body.map((customerData: any) => {
+    const customerId = new mongoose.Types.ObjectId();
+
+    const newPlan = new Plan({
+      _id: new mongoose.Types.ObjectId(),
+      gymId: jwToken.ownerId,
+      customerId: customerId,
+      duration: customerData.validTill,
+      fee: customerData.charges,
+      startDate: customerData.currentBeginDate,
+      endDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
+    });
+
+    const customer = new Customer({
+      _id: customerId,
+      name: customerData.customerName,
+      email: customerData.email,
+      contact: customerData.contact,
+      address: customerData.address,
+      age: customerData.age,
+      gender: customerData.gender,
+      bloodGroup: customerData.bloodGroup,
+      currentBeginDate: customerData.currentBeginDate,
+      currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
+      gymName: customerData.gymName,
+      gymId: jwToken.ownerId,
+    });
+
+    return { plan: newPlan, customer: customer };
+  });
+
+  const saveResults = await Promise.allSettled(newCustomers.map((customerObj:any) => {
+    return Promise.all([customerObj.plan.save(), customerObj.customer.save()]);
+  }));
+
+  const successfullyRegisteredCustomers: { new_plan: any, new_customer: any }[] = [];
+  const errors :any[]  = [];
+
+  for (const result of saveResults) {
+    if (result.status === "fulfilled") {
+      const [planResult, customerResult] = result.value;
+      successfullyRegisteredCustomers.push({ new_plan: planResult, new_customer: customerResult });
+    } else if (result.status === "rejected") {
+      errors.push(result.reason.message);
+    }
+  }
+
+  if (errors.length > 0) {
+    res.status(400).json({
+      error: "Failed to register some customers. See errors for details.",
+      errors: errors,
+      successfullyRegisteredCustomers,
+    });
+  } else {
+    res.status(201).json({ successfullyRegisteredCustomers });
+  }
+
+} catch (err: any) {
+  console.error(err);
+  res.status(500).json({ error: err.message });
+}
+
+})
+
 router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Response<GetCustomerProfileResponse>) => {
   try {
     const customerId = req.params.customerId;
