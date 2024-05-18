@@ -5,6 +5,7 @@ const verifyToken = require("../middleware/jwt");
 import mime from 'mime-types';
 import { S3Bucket } from '../../configs';
 import Customer from '../model/customer'
+const sharp = require('sharp');
 
 const router = express.Router();
 
@@ -16,6 +17,10 @@ const upload = multer({ storage: storage });
 router.post('/upload', verifyToken, upload.single('file'), async (req: any, res) => {
 
     const file = req.file;
+    const compressedImageBuffer = await sharp(file.buffer)
+        .resize({ fit: 'inside', width: 500, height: 500 }) // Adjust dimensions as needed
+        .toBuffer();
+
     if (!file) {
         return res.status(400).json({ message: 'No file uploaded.' });
     }
@@ -23,7 +28,7 @@ router.post('/upload', verifyToken, upload.single('file'), async (req: any, res)
     const params = {
         Bucket: process.env.S3_BUCKET_NAME ?? "",
         Key: `${req.body.customerId}`,
-        Body: file.buffer,
+        Body: compressedImageBuffer,
         ContentType: mime.lookup(file.originalname) || 'application/octet-stream'
     };
 

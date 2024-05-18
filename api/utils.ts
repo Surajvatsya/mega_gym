@@ -1,5 +1,6 @@
 import { S3Bucket } from '../configs';
 import Customer from './model/customer';
+const sharp = require('sharp');
 
 export function convertUtcToLongDateFormat(utcTime: Date): string {
     const indianDate = utcTime.toLocaleString("en-IN", {
@@ -64,11 +65,15 @@ export async function uploadBase64(customerId: string, fileInBase64: string | nu
     }
 
     const fileBuffer = Buffer.from(fileInBase64, 'base64');
+    const compressedImageBuffer = await sharp(fileBuffer)
+        .resize({ fit: 'inside', width: 500, height: 500 }) // Adjust dimensions as needed
+        .toBuffer();
+
     const params = {
         Bucket: process.env.S3_BUCKET_NAME ?? "",
         Key: customerId,
         ContentEncoding: 'base64',
-        Body: fileBuffer,
+        Body: compressedImageBuffer,
         ContentType: 'image/jpeg'
     };
 
