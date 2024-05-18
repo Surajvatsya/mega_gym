@@ -57,7 +57,11 @@ export async function getProfilePic(customerId: string): Promise<string | null> 
     }
 }
 
-export async function uploadBase64(fileInBase64: string, customerId: string) {
+export async function uploadBase64(customerId: string, fileInBase64: string | null) {
+
+    if (fileInBase64 == null) {
+        return null;
+    }
 
     const fileBuffer = Buffer.from(fileInBase64, 'base64');
     const params = {

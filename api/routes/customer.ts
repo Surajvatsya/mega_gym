@@ -215,7 +215,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
     const [planResult, customerResult, profilePic] = await Promise.all([
       newPlan.save(),
       customer.save(),
-      uploadBase64(requestBody.profilePic ?? "", customerId.toString())
+      uploadBase64(customerId.toString(),requestBody.profilePic)
     ]);
 
     res
