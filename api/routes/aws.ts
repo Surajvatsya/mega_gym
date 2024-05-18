@@ -17,8 +17,8 @@ const upload = multer({ storage: storage });
 router.post('/upload', verifyToken, upload.single('file'), async (req: any, res) => {
 
     const file = req.file;
-    const compressedImageBuffer = await sharp(file.buffer)
-        .resize({ fit: 'inside', width: 500, height: 500 }) // Adjust dimensions as needed
+    const compressedImageBuffer = await sharp(file.buffer).rotate()
+        .resize({ fit: 'inside', width: 500, height: 500, rotate: false })
         .toBuffer();
 
     if (!file) {
