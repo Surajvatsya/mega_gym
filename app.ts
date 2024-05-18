@@ -9,6 +9,13 @@ const notificationRoute = require("./api/routes/firebase");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const rateLimit = require('express-rate-limit');
+
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests'
+}))
 
 //NOTE :- Later in PROD change IP address of MONGODB to accept only from our BE server
 // add inbound rules in security group
@@ -23,7 +30,7 @@ mongoose.connection.on("connected", () => {
 });
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json({limit: "5mb"}));
+app.use(bodyParser.json({ limit: "5mb" }));
 
 app.use(cors());
 app.get("/", (req: any, res: any) => {
