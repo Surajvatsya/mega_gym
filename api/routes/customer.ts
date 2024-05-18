@@ -209,6 +209,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       ),
       gymName: requestBody.gymName,
       gymId: jwToken.ownerId,
+      lastUpdatedProfilePic: new Date().getTime().toString()
     });
 
     const [planResult, customerResult, profilePic] = await Promise.all([

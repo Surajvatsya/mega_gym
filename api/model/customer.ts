@@ -13,6 +13,7 @@ interface customer extends Document {
   currentBeginDate: string,
   currentFinishDate: string,
   gymName: string,
+  lastUpdatedProfilePic: string,
 }
 
 const customerSchema: Schema = new mongoose.Schema({
@@ -35,6 +36,7 @@ const customerSchema: Schema = new mongoose.Schema({
   currentBeginDate: String,
   currentFinishDate: String,
   gymName: String,
+  lastUpdatedProfilePic: String
 });
 
 const customer = mongoose.model<customer>('customer', customerSchema);

@@ -4,6 +4,7 @@ import AWS from 'aws-sdk';
 const verifyToken = require("../middleware/jwt");
 import mime from 'mime-types';
 import { S3Bucket } from '../../configs';
+import Customer from '../model/customer'
 
 const router = express.Router();
 
@@ -12,10 +13,11 @@ require('dotenv').config();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-router.post('/upload', verifyToken, upload.single('file'), (req: any, res) => {
+router.post('/upload', verifyToken, upload.single('file'), async (req: any, res) => {
+
     const file = req.file;
     if (!file) {
-        return res.status(400).send('No file uploaded.');
+        return res.status(400).json({ message: 'No file uploaded.' });
     }
 
     const params = {
@@ -25,11 +27,22 @@ router.post('/upload', verifyToken, upload.single('file'), (req: any, res) => {
         ContentType: mime.lookup(file.originalname) || 'application/octet-stream'
     };
 
-    S3Bucket.upload(params, (err: any, data: any) => {
+    S3Bucket.upload(params, async (err: any, data: any) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.status(200).json({ message: 'File uploaded successfully', data });
+
+        await Customer.findByIdAndUpdate(
+            req.body.customerId,
+            {
+                lastUpdatedProfilePic: new Date().getTime().toString()
+            },
+            {
+                new: true,
+            },
+        );
+
+        res.status(200).json({ message: 'File uploaded successfully' });
     });
 });
 

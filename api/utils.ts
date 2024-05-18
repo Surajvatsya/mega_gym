@@ -1,5 +1,5 @@
 import { S3Bucket } from '../configs';
-
+import Customer from './model/customer';
 
 export function convertUtcToLongDateFormat(utcTime: Date): string {
     const indianDate = utcTime.toLocaleString("en-IN", {
@@ -38,6 +38,8 @@ export function getMonthFromNumber(number: number): string {
 }
 
 export async function getProfilePic(customerId: string): Promise<string | null> {
+    const customer = await Customer.findById(customerId);
+
 
     const params = {
         Bucket: process.env.S3_BUCKET_NAME ?? "",
@@ -46,7 +48,7 @@ export async function getProfilePic(customerId: string): Promise<string | null> 
 
     try {
         await S3Bucket.headObject(params).promise();
-        return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${customerId}?time=${Date.now()}`;
+        return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${customerId}?time=${customer?.lastUpdatedProfilePic}`;
     } catch (err: any) {
         if (err.code === 'NotFound') {
             return null;
@@ -58,7 +60,6 @@ export async function getProfilePic(customerId: string): Promise<string | null> 
 export async function uploadBase64(fileInBase64: string, customerId: string) {
 
     const fileBuffer = Buffer.from(fileInBase64, 'base64');
-
     const params = {
         Bucket: process.env.S3_BUCKET_NAME ?? "",
         Key: customerId,
