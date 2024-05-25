@@ -67,10 +67,16 @@ export interface GetCustomerProfileResponse {
     currentFinishDate: string | null,
     error: string | null,
     profilePic: string | null,
-    goal: string| null,
+    goal: string | null,
     experience: string | null
 }
 
 export interface DuplicateResponseCheck {
     unique: boolean,
+}
+
+export interface MemberLoginResponse {
+    contact: String | null,
+    error: any | null,
+    name: String | null,
 }

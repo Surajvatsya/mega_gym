@@ -1,5 +1,5 @@
 import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest } from "../../requests";
-import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails } from "../../responses";
+import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
 import Plan from '../model/plan'
@@ -52,55 +52,24 @@ router.post("/signup", (req: any, res: any) => {
   });
 });
 
-// future usecase
-router.post("/login", (req, res) => {
-  console.log(req.body);
-  Customer.find({ email: req.body.email })
+router.post("/login", (req, res: Response<MemberLoginResponse>) => {
+  Customer.find({ contact: req.body.contact })
     .exec()
     .then((customer) => {
-      console.log("customerFromDB: ", customer);
       if (customer.length < 1) {
         return res.status(404).json({
-          msg: "user not found",
+          name: null,
+          contact: null,
+          error: "user or password is incorrect",
         });
       }
-      console.log(
-        "req.body.password,customer[0].password",
-        req.body.password,
-        customer[0].password,
-      );
-      bcrypt.compare(req.body.password, customer[0].password, (err: any, result: any) => {
-        if (!result) {
-          return res.status(401).json({
-            msg: "password matching failed",
-          });
-        }
-        if (result) {
-          const token = jwt.sign(
-            {
-              name: customer[0].name,
-              contact: customer[0].contact,
-            },
-            process.env.JWT_TOKEN,
-            {
-              expiresIn: "10000000000hr",
-            },
-          );
-          res.status(200).json({
-            customer: customer[0].name,
-            contact: customer[0].contact,
-            token: token,
-          });
-        }
+      res.status(200).json({
+        name: customer[0].name,
+        contact: customer[0].contact,
+        error: null
       });
     })
-
-    .catch((err) => {
-      res.status(500).json({
-        error: err,
-      });
-    });
-});
+})
 
 router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCustomersResponse>) => {
   try {
