@@ -2,9 +2,10 @@ import Owner from "./api/model/owner";
 import { JWToken } from "./requests";
 
 export interface SignUpResponse {
-    new_owner: Owner | null,
+    owner: Owner | null,
     token: String | null,
-    error: any | null
+    error: any | null,
+    trainees: any | null
 }
 
 export interface LoginResponse {
@@ -13,7 +14,8 @@ export interface LoginResponse {
     token: JWToken | null,
     error: any | null,
     name: String | null,
-    deviceToken: String | null
+    deviceToken: String | null,
+    gymName: String | null
 }
 
 export interface AnalysisResponse {
@@ -40,13 +42,10 @@ export interface GetUPIIdResponse {
 export interface CustomerDetails {
     id: string,
     customerName: string,
-    age: number,
-    gender: string,
-    bloodGroup: string,
-    address: string,
     contact: string,
-    email: string,
     currentBeginDate: string,
+    goal: string,
+    experience: string,
     currentFinishDate: string,
     gymId: string,
     expiring: number | null
@@ -62,14 +61,15 @@ export interface GetCustomersResponse {
 export interface GetCustomerProfileResponse {
     gymId: string | null,
     name: string | null,
-    age: number | null,
-    gender: string | null,
-    bloodGroup: string | null,
-    address: string | null,
     contact: string | null,
-    email: string | null,
     currentBeginDate: string | null,
     currentFinishDate: string | null,
     error: string | null,
-    profilePic : string | null
+    profilePic: string | null,
+    goal: string| null,
+    experience: string | null
+}
+
+export interface DuplicateResponseCheck {
+    unique: boolean,
 }

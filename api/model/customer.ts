@@ -3,16 +3,14 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface customer extends Document {
   gymId: mongoose.Schema.Types.ObjectId,
   name: string,
-  age: number,
-  gender: string,
-  bloodGroup: string,
-  address: string,
   contact: string,
-  email: string,
   password: string,
   currentBeginDate: string,
   currentFinishDate: string,
-  gymName: string,
+  goal: string,
+  experience: string,
+  traineeId: mongoose.Schema.Types.ObjectId,
+
   lastUpdatedProfilePic: string,
 }
 
@@ -36,7 +34,9 @@ const customerSchema: Schema = new mongoose.Schema({
   currentBeginDate: String,
   currentFinishDate: String,
   gymName: String,
-  lastUpdatedProfilePic: String
+  lastUpdatedProfilePic: String,
+  goal: String,
+  experience: String
 });
 
 const customer = mongoose.model<customer>('customer', customerSchema);

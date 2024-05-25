@@ -2,18 +2,23 @@ import mongoose from "mongoose"
 import { Request } from 'express';
 
 export interface SignUpRequest {
-    ownerName: String,
-    email: String,
+    name: String,
     password: String,
     gymName: String,
-    contact: String,
+    contact: string,
     address: String,
     upiId: String,
     deviceToken: String | null
+    trainees: TraineeDetail[]
+}
+
+export interface TraineeDetail {
+    name: string,
+    experience: string
 }
 
 export interface LoginRequest {
-    email: String,
+    contact: string,
     password: String
     deviceToken: String | null
 }
@@ -26,17 +31,15 @@ export interface JWToken {
 
 export interface RegisterCustomerRequest {
     jwt: JWToken,
-    customerName: string;
-    email: string;
+    name: string;
     contact: string;
-    address: string;
-    age: number;
-    gender: string;
-    bloodGroup: string;
     currentBeginDate: string;
     validTill: number;
     charges: number;
     gymName: string;
+    goal: string,
+    experience: string,
+    mentorName: string,
     profilePic: string | null
 }
 

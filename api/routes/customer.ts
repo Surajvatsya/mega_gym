@@ -79,7 +79,6 @@ router.post("/login", (req, res) => {
           const token = jwt.sign(
             {
               name: customer[0].name,
-              email: customer[0].email,
               contact: customer[0].contact,
             },
             process.env.JWT_TOKEN,
@@ -90,7 +89,6 @@ router.post("/login", (req, res) => {
           res.status(200).json({
             customer: customer[0].name,
             contact: customer[0].contact,
-            email: customer[0].email,
             token: token,
           });
         }
@@ -130,18 +128,15 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
       const customerData: CustomerDetails = {
         id: customer.id,
         customerName: customer.name,
-        age: customer.age,
-        gender: customer.gender,
-        bloodGroup: customer.bloodGroup,
-        address: customer.address,
         contact: customer.contact,
-        email: customer.email,
         currentBeginDate: customer.currentBeginDate,
         currentFinishDate: customer.currentFinishDate,
         gymId: customer.gymId.toString(),
         expiring: expiryIndays <= 10 && expiryIndays > 0 ? expiryIndays : null,
         expired: expiryIndays > 0 ? null : Math.abs(expiryIndays),
-        profilePic: null
+        profilePic: null,
+        goal: customer.goal,
+        experience: customer.experience,
       };
 
       profilePicPromises.push(getProfilePic(customer.id).then(profilePic => {
@@ -195,13 +190,8 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
 
     const customer = new Customer({
       _id: customerId,
-      name: requestBody.customerName,
-      email: requestBody.email,
+      name: requestBody.name,
       contact: requestBody.contact,
-      address: requestBody.address,
-      age: requestBody.age,
-      gender: requestBody.gender,
-      bloodGroup: requestBody.bloodGroup,
       currentBeginDate: requestBody.currentBeginDate,
       currentFinishDate: addValidTillToCurrDate(
         requestBody.currentBeginDate,
@@ -209,89 +199,92 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       ),
       gymName: requestBody.gymName,
       gymId: jwToken.ownerId,
+      goal: requestBody.goal,
+      experience: requestBody.experience,
       lastUpdatedProfilePic: new Date().getTime().toString()
     });
 
     const [planResult, customerResult, profilePic] = await Promise.all([
       newPlan.save(),
       customer.save(),
-      uploadBase64(customerId.toString(),requestBody.profilePic)
+      uploadBase64(customerId.toString(), requestBody.profilePic),
+      getProfilePic(customer.id)
     ]);
 
     res
       .status(200)
-      .json({ new_plan: planResult, new_customer: customerResult });
+      .json({ new_plan: planResult, new_customer: customerResult, profilePic: await getProfilePic(customer.id) });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post("/registerBulkCustomer",verifyToken, async (req: any, res: any) =>{
+router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => {
   try {
-  const jwToken: JWToken = req.jwt;
+    const jwToken: JWToken = req.jwt;
 
-  const newCustomers = req.body.map((customerData: any) => {
-    const customerId = new mongoose.Types.ObjectId();
+    const newCustomers = req.body.map((customerData: any) => {
+      const customerId = new mongoose.Types.ObjectId();
 
-    const newPlan = new Plan({
-      _id: new mongoose.Types.ObjectId(),
-      gymId: jwToken.ownerId,
-      customerId: customerId,
-      duration: customerData.validTill,
-      fee: customerData.charges,
-      startDate: customerData.currentBeginDate,
-      endDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
+      const newPlan = new Plan({
+        _id: new mongoose.Types.ObjectId(),
+        gymId: jwToken.ownerId,
+        customerId: customerId,
+        duration: customerData.validTill,
+        fee: customerData.charges,
+        startDate: customerData.currentBeginDate,
+        endDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
+      });
+
+      const customer = new Customer({
+        _id: customerId,
+        name: customerData.customerName,
+        email: customerData.email,
+        contact: customerData.contact,
+        address: customerData.address,
+        age: customerData.age,
+        gender: customerData.gender,
+        bloodGroup: customerData.bloodGroup,
+        currentBeginDate: customerData.currentBeginDate,
+        currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
+        gymName: customerData.gymName,
+        gymId: jwToken.ownerId,
+      });
+
+      return { plan: newPlan, customer: customer };
     });
 
-    const customer = new Customer({
-      _id: customerId,
-      name: customerData.customerName,
-      email: customerData.email,
-      contact: customerData.contact,
-      address: customerData.address,
-      age: customerData.age,
-      gender: customerData.gender,
-      bloodGroup: customerData.bloodGroup,
-      currentBeginDate: customerData.currentBeginDate,
-      currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
-      gymName: customerData.gymName,
-      gymId: jwToken.ownerId,
-    });
+    const saveResults = await Promise.allSettled(newCustomers.map((customerObj: any) => {
+      return Promise.all([customerObj.plan.save(), customerObj.customer.save()]);
+    }));
 
-    return { plan: newPlan, customer: customer };
-  });
+    const successfullyRegisteredCustomers: { new_plan: any, new_customer: any }[] = [];
+    const errors: any[] = [];
 
-  const saveResults = await Promise.allSettled(newCustomers.map((customerObj:any) => {
-    return Promise.all([customerObj.plan.save(), customerObj.customer.save()]);
-  }));
-
-  const successfullyRegisteredCustomers: { new_plan: any, new_customer: any }[] = [];
-  const errors :any[]  = [];
-
-  for (const result of saveResults) {
-    if (result.status === "fulfilled") {
-      const [planResult, customerResult] = result.value;
-      successfullyRegisteredCustomers.push({ new_plan: planResult, new_customer: customerResult });
-    } else if (result.status === "rejected") {
-      errors.push(result.reason.message);
+    for (const result of saveResults) {
+      if (result.status === "fulfilled") {
+        const [planResult, customerResult] = result.value;
+        successfullyRegisteredCustomers.push({ new_plan: planResult, new_customer: customerResult });
+      } else if (result.status === "rejected") {
+        errors.push(result.reason.message);
+      }
     }
-  }
 
-  if (errors.length > 0) {
-    res.status(400).json({
-      error: "Failed to register some customers. See errors for details.",
-      errors: errors,
-      successfullyRegisteredCustomers,
-    });
-  } else {
-    res.status(201).json({ successfullyRegisteredCustomers });
-  }
+    if (errors.length > 0) {
+      res.status(400).json({
+        error: "Failed to register some customers. See errors for details.",
+        errors: errors,
+        successfullyRegisteredCustomers,
+      });
+    } else {
+      res.status(201).json({ successfullyRegisteredCustomers });
+    }
 
-} catch (err: any) {
-  console.error(err);
-  res.status(500).json({ error: err.message });
-}
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 
 })
 
@@ -303,15 +296,12 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       return res.status(404).json({
         gymId: null,
         name: null,
-        age: null,
-        gender: null,
-        bloodGroup: null,
-        address: null,
         contact: null,
-        email: null,
         currentBeginDate: null,
         currentFinishDate: null,
         profilePic: null,
+        goal: null,
+        experience: null,
 
         error: "Customer not found"
       });
@@ -319,16 +309,12 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
     res.status(200).json({
       gymId: customer.gymId.toString(),
       name: customer.name,
-      age: customer.age,
-      gender: customer.gender,
-      bloodGroup: customer.bloodGroup,
-      address: customer.address,
       contact: customer.contact,
-      email: customer.email,
       currentBeginDate: customer.currentBeginDate,
       currentFinishDate: customer.currentFinishDate,
       profilePic: await getProfilePic(customer.id),
-
+      goal: customer.goal,
+      experience: customer.experience,
       error: null
     });
   } catch (err) {
@@ -336,14 +322,12 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
     return res.status(500).json({
       gymId: null,
       name: null,
-      age: null,
-      gender: null,
-      bloodGroup: null,
-      address: null,
       contact: null,
-      email: null,
       currentBeginDate: null,
       profilePic: null,
+      goal: null,
+      experience: null,
+
       currentFinishDate: null, error: "'Internal Server Error'"
     });
   }

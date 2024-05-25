@@ -4,30 +4,52 @@ import Customer from "../model/customer";
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const verifyToken = require("../middleware/jwt");
-import { AnalysisResponse, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, SignUpResponse } from '../../responses';
+import { AnalysisResponse, DuplicateResponseCheck, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, SignUpResponse } from '../../responses';
 import { getMonthFromNumber } from "../utils";
 import { SignUpRequest, LoginRequest, JWToken } from '../../requests';
 import Owner from '../model/owner';
 import Plan from '../model/plan'
+import Trainee from '../model/trainee';
 
 require("dotenv").config();
 const router = express.Router();
 
-router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response<SignUpResponse>) => {
+router.get("/contactDuplicateCheck/:contact", async (req: Request<{ contact: string }, {}, {}>, res: Response<DuplicateResponseCheck>) => {
+    if (await Owner.exists({ contact: req.params.contact })) {
+        res.status(200).json({ unique: false });
+    }
+    else {
+        res.status(200).json({ unique: true });
+    }
+})
+
+router.post("/signup", async (req: Request<{}, {}, SignUpRequest>, res: Response<SignUpResponse>) => {
+
+    if (await Owner.exists({ contact: req.body.contact })) {
+        res.status(500).json({
+            owner: null,
+            token: null,
+            error: "Owner already exists with this contact",
+            trainees: null
+        });
+    }
+
+
+    const requestBody: SignUpRequest = req.body;
     bcrypt.hash(req.body.password, 10, (err: any, hash: any) => {
         if (err) {
             return res.status(500).json({
-                new_owner: null,
+                owner: null,
                 token: null,
                 error: err,
+                trainees: null
             });
         } else {
             const ownerId = new mongoose.Types.ObjectId();
             const owner = new Owner({
                 _id: ownerId,
-                name: req.body.ownerName,
+                name: req.body.name,
                 password: hash,
-                email: req.body.email,
                 gymName: req.body.gymName,
                 contact: req.body.contact,
                 address: req.body.address,
@@ -42,7 +64,6 @@ router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response<SignU
                         const token = jwt.sign(
                             {
                                 ownerId,
-                                email: req.body.email,
                                 contact: req.body.contact,
                             },
                             process.env.JWT_TOKEN,
@@ -50,19 +71,41 @@ router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response<SignU
                                 expiresIn: "10000000000hr",
                             },
                         );
-                        res.status(200).json({
-                            new_owner: result,
-                            token: token,
-                            error: null
+
+                        const traineeDetails: Trainee[] = []
+
+                        const traineeDetailsPromises = requestBody.trainees.map(trainee => {
+                            const newTrainee = new Trainee({
+                                _id: new mongoose.Types.ObjectId(),
+                                gymId: ownerId,
+                                name: trainee.name,
+                                experience: parseInt(trainee.experience, 10),
+                            });
+
+                            return newTrainee.save();
                         });
+
+                        Promise.all(traineeDetailsPromises)
+                            .then(savedTrainees => {
+                                res.status(200).json({
+                                    owner: result,
+                                    trainees: savedTrainees,
+                                    token: token,
+                                    error: null
+                                });
+                            })
+                            .catch(error => {
+                            });
+
                     }
                 })
                 .catch((err: any) => {
                     console.log(err);
                     res.status(500).json({
-                        new_owner: null,
+                        owner: null,
                         token: null,
                         error: err,
+                        trainees: null
                     });
                 });
         }
@@ -70,7 +113,7 @@ router.post("/signup", (req: Request<{}, {}, SignUpRequest>, res: Response<SignU
 });
 
 router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse, {}>) => {
-    Owner.find({ email: req.body.email })
+    Owner.find({ contact: req.body.contact })
         .exec()
         .then((owners) => {
             if (owners.length < 1) {
@@ -80,6 +123,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                     email: null,
                     token: null,
                     deviceToken: null,
+                    gymName: null,
                     error: "password matching failed",
                 });
             }
@@ -91,6 +135,8 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         email: null,
                         token: null,
                         deviceToken: null,
+                        gymName: null,
+
                         error: "password matching failed",
                     });
                 }
@@ -98,10 +144,9 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                     const token: JWToken = jwt.sign(
                         {
                             ownerId: owners[0].id,
-                            email: owners[0].email,
                             contact: owners[0].contact,
                         },
-                        process.env.JWT_TOKEN, //second parameter is the secret key used to sign the token
+                        process.env.JWT_TOKEN,
                         {
                             expiresIn: "10000000000hr",
                         },
@@ -114,7 +159,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         if (docs) {
                             console.log(docs);
                         }
-                        else{
+                        else {
                             console.log("error");
                         }
                     });
@@ -125,6 +170,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         contact: owners[0].contact,
                         email: owners[0].email ?? null,
                         token: token,
+                        gymName: owners[0].gymName ?? null,
                         deviceToken: req.body.deviceToken,
                         error: null,
                     });
@@ -133,6 +179,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
         })
         .catch((err) => {
             res.status(500).json({
+                gymName: null,
                 name: null,
                 contact: null,
                 email: null,
