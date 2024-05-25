@@ -3,6 +3,7 @@ import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails } fro
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
 import Plan from '../model/plan'
+import Attendance from '../model/attendance'
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
@@ -204,16 +205,29 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       lastUpdatedProfilePic: new Date().getTime().toString()
     });
 
+    const current = new Date().getMonth;
+    console.log("new Date().getMonth", current);
+
+
+    const createAttandanceRecord = new Attendance({
+      _id: new mongoose.Types.ObjectId(),
+      customerId,
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      days: 0
+    })
+
     const [planResult, customerResult, profilePic] = await Promise.all([
       newPlan.save(),
       customer.save(),
+      createAttandanceRecord.save(),
       uploadBase64(customerId.toString(), requestBody.profilePic),
       getProfilePic(customer.id)
     ]);
 
     res
       .status(200)
-      .json({ new_plan: planResult, new_customer: customerResult, profilePic: await getProfilePic(customer.id) });
+      .json({ new_plan: planResult, new_customer: customerResult, profilePic: await getProfilePic(customer.id), attandance: createAttandanceRecord });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -392,5 +406,50 @@ router.delete("/deleteCustomer/:customerId", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+router.post("/markAttandance/:customerId", verifyToken, async (req, res) => {
+  try {
+
+
+    const currDay = new Date().getDate();
+    const currMonth = new Date().getMonth() + 1;
+    const currYear = new Date().getFullYear();
+    const customerId = req.params.customerId;
+    if (currDay == 1) {
+      const createAttandanceRecord = new Attendance({
+        _id: new mongoose.Types.ObjectId(),
+        customerId,
+        year: currYear,
+        month: currMonth,
+        days: 0
+      })
+    }
+
+    const attendanceDays = await Attendance.findOne({ customerId, month: currMonth, year: currYear }, { days: 1, _id: 0 });
+    console.log(" customerId, currMonth, currYear ", attendanceDays);
+
+    if (!attendanceDays) {
+      return res.status(404).json({ message: 'Attendance not found' });
+    }
+
+    if (typeof (attendanceDays.days) == 'number') {
+      const updateAttandanceDays = attendanceDays.days | (1 << (currDay - 1));
+      const updatedAttandanceDays = await Attendance.findOneAndUpdate({ customerId, month: currMonth, year: currYear }, { days: updateAttandanceDays })
+
+      if (!updatedAttandanceDays) {
+        return res.status(404).json({ message: 'Attendance could not update' });
+      }
+      res.status(200).json({ "msg": "updated attandance successfully" })
+    }
+    else {
+      console.log("Empty attandance , couldn't update");
+
+    }
+  } catch (error) {
+    res.status(503).json({ "msg": "Internal server error" })
+    console.log("Error : ", error);
+
+  }
+})
 
 module.exports = router;
