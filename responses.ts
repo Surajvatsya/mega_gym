@@ -15,7 +15,8 @@ export interface LoginResponse {
     error: any | null,
     name: String | null,
     deviceToken: String | null,
-    gymName: String | null
+    gymName: String | null,
+    trainees: any | null
 }
 
 export interface AnalysisResponse {

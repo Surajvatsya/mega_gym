@@ -112,7 +112,7 @@ router.post("/signup", async (req: Request<{}, {}, SignUpRequest>, res: Response
     });
 });
 
-router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse, {}>) => {
+router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse, {}>) => {
     Owner.find({ contact: req.body.contact })
         .exec()
         .then((owners) => {
@@ -124,10 +124,11 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                     token: null,
                     deviceToken: null,
                     gymName: null,
+                    trainees: null,
                     error: "password matching failed",
                 });
             }
-            bcrypt.compare(req.body.password, owners[0].password, (err: any, result: any) => {
+            bcrypt.compare(req.body.password, owners[0].password, async (err: any, result: any) => {
                 if (!result) {
                     return res.status(401).json({
                         name: null,
@@ -136,6 +137,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         token: null,
                         deviceToken: null,
                         gymName: null,
+                        trainees: null,
 
                         error: "password matching failed",
                     });
@@ -164,11 +166,14 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                         }
                     });
 
+                    const [trainees]  = await Promise.all([Trainee.find({gymId: owners[0].id})]);
+
 
                     res.status(200).json({
                         name: owners[0].name ?? null,
                         contact: owners[0].contact,
                         email: owners[0].email ?? null,
+                        trainees: trainees,
                         token: token,
                         gymName: owners[0].gymName ?? null,
                         deviceToken: req.body.deviceToken,
@@ -183,6 +188,7 @@ router.post("/login", (req: Request<{}, {}, LoginRequest>, res: Response<LoginRe
                 name: null,
                 contact: null,
                 email: null,
+                trainees: null,
                 token: null,
                 deviceToken: null,
                 error: err,
