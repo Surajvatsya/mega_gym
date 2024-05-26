@@ -48,3 +48,22 @@ export interface updateSubscriptionRequest {
     validTill: number,
     charges: number
 }
+
+export interface TemplateRequest {
+    goal: String,
+    experience: String,
+    templateDesc: [{
+        day: String,
+        targetBody: String,
+        allExercise: [
+            {
+            exerciseName: String,
+            exerciseDesc: {
+                setNumber: Number,
+                weight: Number,
+                reps: Number
+            }
+        }
+        ]
+    }]
+}
