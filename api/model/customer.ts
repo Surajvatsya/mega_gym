@@ -36,7 +36,8 @@ const customerSchema: Schema = new mongoose.Schema({
   gymName: String,
   lastUpdatedProfilePic: String,
   goal: String,
-  experience: String
+  experience: String,
+  traineeId: mongoose.Schema.Types.ObjectId
 });
 
 const customer = mongoose.model<customer>('customer', customerSchema);

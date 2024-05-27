@@ -30,6 +30,27 @@ export function addValidTillToCurrDate(currentBeginDate: string, validTill: numb
     });
 };
 
+export function calculateValidTill(startDate: string, endDate: string): number {
+    const [startDay, startMonth, startYear] = startDate.split(" ");
+    const [endYear, endMonth, endDay] = endDate.split(" ");
+
+    const start = new Date(`${startYear}-${getMonthNumber(startMonth)}-${startDay}`);
+    const end = new Date(`${endYear}-${endMonth}-${endDay}`);
+
+    const diffInMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+
+    return diffInMonths;
+}
+
+function getMonthNumber(month: string): string {
+    const monthNameAndNumber: { [key: string]: string } = {
+        Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+        Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12',
+    };
+
+    return monthNameAndNumber[month];
+}
+
 
 export function getMonthFromNumber(number: number): string {
     const currentDate = new Date();

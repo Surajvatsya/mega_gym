@@ -62,6 +62,8 @@ export interface GetCustomersResponse {
 export interface GetCustomerProfileResponse {
     gymId: string | null,
     name: string | null,
+    trainerName: String | null,
+    validTill: number | null
     contact: string | null,
     currentBeginDate: string | null,
     currentFinishDate: string | null,
@@ -79,6 +81,7 @@ export interface MemberLoginResponse {
     contact: String | null,
     error: any | null,
     name: String | null,
+    token: String | null
 }
 
 export interface OwnerDetails {

@@ -39,7 +39,7 @@ export interface RegisterCustomerRequest {
     gymName: string;
     goal: string,
     experience: string,
-    mentorName: string,
+    mentorId: string,
     profilePic: string | null
 }
 

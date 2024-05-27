@@ -12,11 +12,11 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const rateLimit = require('express-rate-limit');
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests'
-}))
+// app.use(rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+//   message: 'Too many requests'
+// }))
 
 //NOTE :- Later in PROD change IP address of MONGODB to accept only from our BE server
 // add inbound rules in security group

@@ -2,13 +2,15 @@ import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest } from "../
 import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
+import Trainee from '../model/trainee'
 import Plan from '../model/plan'
 import Attendance from '../model/attendance'
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
-import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3 } from '../utils'
+import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3, calculateValidTill } from '../utils'
 import express, { Request, Response } from 'express';
+import Owner from "../model/owner";
 
 require("dotenv").config();
 const router = express.Router();
@@ -56,18 +58,35 @@ router.post("/signup", (req: any, res: any) => {
 router.post("/login", (req, res: Response<MemberLoginResponse>) => {
   Customer.find({ contact: req.body.contact })
     .exec()
-    .then((customer) => {
-      if (customer.length < 1) {
+    .then((customers) => {
+      if (customers.length < 1) {
         return res.status(404).json({
           name: null,
           contact: null,
           error: "user or password is incorrect",
+          token: null
         });
       }
+
+
+      let ownerId = customers[0].id;
+
+      const token = jwt.sign(
+        {
+          ownerId,
+          contact: req.body.contact,
+        },
+        process.env.JWT_TOKEN,
+        {
+          expiresIn: "10000000000hr",
+        },
+      );
+
       res.status(200).json({
-        name: customer[0].name,
-        contact: customer[0].contact,
-        error: null
+        name: customers[0].name,
+        contact: customers[0].contact,
+        error: null,
+        token: token
       });
     })
 })
@@ -171,7 +190,9 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       gymId: jwToken.ownerId,
       goal: requestBody.goal,
       experience: requestBody.experience,
-      lastUpdatedProfilePic: new Date().getTime().toString()
+      traineeId: requestBody.mentorId,
+      lastUpdatedProfilePic: new Date().getTime().toString(),
+
     });
 
     const current = new Date().getMonth;
@@ -284,17 +305,26 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         currentFinishDate: null,
         profilePic: null,
         goal: null,
+        trainerName: null,
+        validTill: null,
         experience: null,
 
         error: "Customer not found"
       });
     }
+
+    const trainee = await Trainee.findById(customer.traineeId)
+
+
+
     res.status(200).json({
       gymId: customer.gymId.toString(),
       name: customer.name,
       contact: customer.contact,
       currentBeginDate: customer.currentBeginDate,
       currentFinishDate: customer.currentFinishDate,
+      trainerName: trainee ? trainee.name : null,
+      validTill: calculateValidTill(customer.currentBeginDate, customer.currentFinishDate),
       profilePic: await getProfilePic(customer.id),
       goal: customer.goal,
       experience: customer.experience,
@@ -308,6 +338,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       contact: null,
       currentBeginDate: null,
       profilePic: null,
+      trainerName: null,
+      validTill: null,
       goal: null,
       experience: null,
 
@@ -420,5 +452,91 @@ router.post("/markAttandance/:customerId", verifyToken, async (req, res) => {
 
   }
 })
+
+router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerProfileResponse>) => {
+  const jwtoken: JWToken = req.jwt
+
+  if (jwtoken == undefined) {
+    res.status(404).json({
+      contact: null,
+      error: "Jwt token is undefined",
+      gymId: null,
+      name: null,
+      trainerName: null,
+      validTill: null,
+      currentFinishDate: null,
+      profilePic: null,
+      goal: null,
+      experience: null,
+      currentBeginDate: null
+    })
+  }
+
+  const customer = await Customer.findById(jwtoken.ownerId);
+
+
+
+
+  if (customer) {
+
+    if (customer.traineeId) {
+      const trainer = await Trainee.findById(customer.traineeId);
+
+      res.status(404).json({
+        contact: customer.contact,
+        error: null,
+        gymId: null,
+        name: customer.name,
+        trainerName: trainer ? trainer.name : null,
+        validTill: calculateValidTill(customer.currentBeginDate, customer.currentFinishDate),
+        currentFinishDate: customer.currentFinishDate,
+        profilePic: null,
+        goal: null,
+        experience: null,
+        currentBeginDate: customer.currentBeginDate
+      });
+    }
+    else {
+      res.status(404).json({
+        contact: customer.contact,
+        error: null,
+        gymId: null,
+        name: customer.name,
+        trainerName: null,
+        validTill: calculateValidTill(customer.currentBeginDate, customer.currentFinishDate),
+        currentFinishDate: customer.currentFinishDate,
+        profilePic: null,
+        goal: null,
+        experience: null,
+        currentBeginDate: customer.currentBeginDate
+      });
+    }
+
+
+
+
+
+
+  }
+  else {
+    res.status(404).json({
+      contact: null,
+      error: 'customer not found',
+      gymId: null,
+      name: null,
+      trainerName: null,
+      validTill: null,
+      currentFinishDate: null,
+      profilePic: null,
+      goal: null,
+      experience: null,
+      currentBeginDate: null
+    });
+  }
+
+
+
+
+});
 
 module.exports = router;
