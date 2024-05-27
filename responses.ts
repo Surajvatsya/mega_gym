@@ -91,3 +91,17 @@ export interface OwnerDetails {
     gymName: String | null,
     trainees: any | null
 }
+}
+
+export interface TemplateResponse {
+    templateDesc: {
+        day: string;
+        targetBody: string;
+        allExercise: {
+            exerciseName: string;
+            setNumber: number;
+            weight: number;
+            reps: number;
+        }[] | null;
+    }[] | null;
+}

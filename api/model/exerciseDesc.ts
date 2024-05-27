@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface ExerciseDesc extends Document {
-    exerciseName : String, 
-    setNumber : Number,
-    weight : Number,
-    reps : Number
+    exerciseName : string, 
+    setNumber : number,
+    weight : number,
+    reps : number
 }
 
 const exerciseDescSchema: Schema = new mongoose.Schema({
