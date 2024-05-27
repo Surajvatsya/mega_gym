@@ -80,3 +80,11 @@ export interface MemberLoginResponse {
     error: any | null,
     name: String | null,
 }
+
+export interface OwnerDetails {
+    contact: String | null,
+    error: any | null,
+    name: String | null,
+    gymName: String | null,
+    trainees: any | null
+}

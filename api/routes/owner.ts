@@ -4,7 +4,7 @@ import Customer from "../model/customer";
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const verifyToken = require("../middleware/jwt");
-import { AnalysisResponse, DuplicateResponseCheck, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, SignUpResponse } from '../../responses';
+import { AnalysisResponse, DuplicateResponseCheck, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, OwnerDetails, SignUpResponse } from '../../responses';
 import { getMonthFromNumber } from "../utils";
 import { SignUpRequest, LoginRequest, JWToken } from '../../requests';
 import Owner from '../model/owner';
@@ -166,7 +166,7 @@ router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<L
                         }
                     });
 
-                    const [trainees]  = await Promise.all([Trainee.find({gymId: owners[0].id})]);
+                    const [trainees] = await Promise.all([Trainee.find({ gymId: owners[0].id })]);
 
 
                     res.status(200).json({
@@ -447,5 +447,50 @@ router.put("/upiId", verifyToken, async (req: any, res) => {
     const owner = await Owner.findById(jwtoken.ownerId);
     res.status(200).json(owner);
 });
+
+router.get("/details", verifyToken, async (req: any, res: Response<OwnerDetails>) => {
+    const jwtoken: JWToken = req.jwt
+
+    if(jwtoken == undefined){
+        res.status(404).json({
+            contact: null,
+            error: "Jwt token is undefined",
+            name: null,
+            gymName: null,
+            trainees: null
+        })
+    }
+
+    const owner = await Owner.findById(jwtoken.ownerId);
+
+    
+
+    if (owner) {
+
+        const trainees = await Trainee.find({gymId: owner.id});
+
+        res.status(200).json({
+            contact: owner.contact,
+            error: null,
+            name: owner.name,
+            gymName: owner.gymName,
+            trainees: trainees
+        });
+    }
+    else{
+        res.status(404).json({
+            contact: null,
+            error: "Owner not found by this jwt token",
+            name: null,
+            gymName: null,
+            trainees: null
+        })
+    }
+
+
+
+});
+
+
 
 module.exports = router;
