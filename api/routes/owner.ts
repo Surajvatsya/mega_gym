@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const verifyToken = require("../middleware/jwt");
 import { AnalysisResponse, DuplicateResponseCheck, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, OwnerDetails, SignUpResponse } from '../../responses';
 import { getMonthFromNumber } from "../utils";
-import { SignUpRequest, LoginRequest, JWToken } from '../../requests';
+import { SignUpRequest, LoginRequest, JWToken, UpdateLocationRequest } from '../../requests';
 import Owner from '../model/owner';
 import Plan from '../model/plan'
 import Trainee from '../model/trainee';
@@ -55,6 +55,8 @@ router.post("/signup", async (req: Request<{}, {}, SignUpRequest>, res: Response
                 address: req.body.address,
                 upiId: req.body.upiId,
                 deviceToken: req.body.deviceToken,
+                gymLocationLat: requestBody.lat,
+                gymLocationLon: requestBody.lon
             });
 
             owner
@@ -71,8 +73,6 @@ router.post("/signup", async (req: Request<{}, {}, SignUpRequest>, res: Response
                                 expiresIn: "10000000000hr",
                             },
                         );
-
-                        const traineeDetails: Trainee[] = []
 
                         const traineeDetailsPromises = requestBody.trainees.map(trainee => {
                             const newTrainee = new Trainee({
@@ -112,6 +112,24 @@ router.post("/signup", async (req: Request<{}, {}, SignUpRequest>, res: Response
     });
 });
 
+router.put('/updateLocation', verifyToken, async (req: any, res: any) => {
+    const jwtoken: JWToken = req.jwt;
+    const requestBody: UpdateLocationRequest = req.body;
+
+    try {
+        const owner = await Owner.findById(jwtoken.ownerId).exec();
+
+        if (owner) {
+            await Owner.findByIdAndUpdate(jwtoken.ownerId, { gymLocationLat: requestBody.lat, gymLocationLon: requestBody.lon });
+            res.status(200).json(owner);
+        } else {
+            res.status(404).json({ error: "Owner not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse, {}>) => {
     Owner.find({ contact: req.body.contact })
         .exec()
@@ -125,6 +143,8 @@ router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<L
                     deviceToken: null,
                     gymName: null,
                     trainees: null,
+                    lat: null,
+                    lon: null,
                     error: "password matching failed",
                 });
             }
@@ -138,6 +158,8 @@ router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<L
                         deviceToken: null,
                         gymName: null,
                         trainees: null,
+                        lat: null,
+                        lon: null,
 
                         error: "password matching failed",
                     });
@@ -178,6 +200,8 @@ router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<L
                         gymName: owners[0].gymName ?? null,
                         deviceToken: req.body.deviceToken,
                         error: null,
+                        lat: owners[0].gymLocationLat,
+                        lon: owners[0].gymLocationLon,
                     });
                 }
             });
@@ -192,6 +216,8 @@ router.post("/login", async (req: Request<{}, {}, LoginRequest>, res: Response<L
                 token: null,
                 deviceToken: null,
                 error: err,
+                lat: null,
+                lon: null,
             });
         });
 });
@@ -451,39 +477,45 @@ router.put("/upiId", verifyToken, async (req: any, res) => {
 router.get("/details", verifyToken, async (req: any, res: Response<OwnerDetails>) => {
     const jwtoken: JWToken = req.jwt
 
-    if(jwtoken == undefined){
+    if (jwtoken == undefined) {
         res.status(404).json({
             contact: null,
             error: "Jwt token is undefined",
             name: null,
             gymName: null,
-            trainees: null
+            trainees: null,
+            gymLocationLat: null,
+            gymLocationLon: null
         })
     }
 
     const owner = await Owner.findById(jwtoken.ownerId);
 
-    
+
 
     if (owner) {
 
-        const trainees = await Trainee.find({gymId: owner.id});
+        const trainees = await Trainee.find({ gymId: owner.id });
 
         res.status(200).json({
             contact: owner.contact,
             error: null,
             name: owner.name,
             gymName: owner.gymName,
-            trainees: trainees
+            trainees: trainees,
+            gymLocationLat: owner.gymLocationLat,
+            gymLocationLon: owner.gymLocationLon
         });
     }
-    else{
+    else {
         res.status(404).json({
             contact: null,
             error: "Owner not found by this jwt token",
             name: null,
             gymName: null,
-            trainees: null
+            trainees: null,
+            gymLocationLat: null,
+            gymLocationLon: null
         })
     }
 

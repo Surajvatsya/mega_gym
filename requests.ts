@@ -9,6 +9,8 @@ export interface SignUpRequest {
     address: String,
     upiId: String,
     deviceToken: String | null
+    lat: String | null,
+    lon: String| null,
     trainees: TraineeDetail[]
 }
 
@@ -66,4 +68,9 @@ export interface TemplateRequest {
         }
         ]
     }]
+}
+
+export interface UpdateLocationRequest {
+    lat: String,
+    lon: String
 }

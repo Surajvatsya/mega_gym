@@ -9,6 +9,8 @@ interface Owner extends Document {
     address: string;
     upiId?: string;
     deviceToken: string;
+    gymLocationLat: string,
+    gymLocationLon: string
 }
 
 const ownerSchema: Schema = new Schema({
@@ -33,6 +35,8 @@ const ownerSchema: Schema = new Schema({
     },
     upiId: String,
     deviceToken: String,
+    gymLocationLat: String,
+    gymLocationLon: String
 });
 
 const Owner = mongoose.model<Owner>('owner', ownerSchema);

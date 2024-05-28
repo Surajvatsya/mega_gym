@@ -10,6 +10,7 @@ interface customer extends Document {
   goal: string,
   experience: string,
   traineeId: mongoose.Schema.Types.ObjectId,
+  currentPlanId: mongoose.Schema.Types.ObjectId,
 
   lastUpdatedProfilePic: string,
 }
@@ -37,6 +38,7 @@ const customerSchema: Schema = new mongoose.Schema({
   lastUpdatedProfilePic: String,
   goal: String,
   experience: String,
+  currentPlanId: mongoose.Schema.Types.ObjectId,
   traineeId: mongoose.Schema.Types.ObjectId
 });
 

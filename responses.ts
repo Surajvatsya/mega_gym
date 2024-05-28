@@ -16,7 +16,10 @@ export interface LoginResponse {
     name: String | null,
     deviceToken: String | null,
     gymName: String | null,
-    trainees: any | null
+    trainees: any | null,
+    lat: string | null,
+    lon: string | null,
+
 }
 
 export interface AnalysisResponse {
@@ -89,5 +92,7 @@ export interface OwnerDetails {
     error: any | null,
     name: String | null,
     gymName: String | null,
-    trainees: any | null
+    trainees: any | null,
+    gymLocationLat : String | null,
+    gymLocationLon : String | null
 }

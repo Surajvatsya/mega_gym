@@ -10,7 +10,6 @@ const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
 import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3, calculateValidTill } from '../utils'
 import express, { Request, Response } from 'express';
-import Owner from "../model/owner";
 
 require("dotenv").config();
 const router = express.Router();
@@ -192,7 +191,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       experience: requestBody.experience,
       traineeId: requestBody.mentorId,
       lastUpdatedProfilePic: new Date().getTime().toString(),
-
+      currentPlanId: newPlan.id
     });
 
     const current = new Date().getMonth;
@@ -373,6 +372,7 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
     let updateFields = {
       currentBeginDate: requestBody.currentBeginDate,
       currentFinishDate: finishDate,
+      currentPlanId: newPlan.id
     };
 
     const updatedCustomer = await Customer.findByIdAndUpdate(
