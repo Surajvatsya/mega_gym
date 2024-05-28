@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface TemplateDesc extends Document {
-    day:String,
-    targetBody : String, 
-    exerciseName : String, 
-    exerciseDescId :  mongoose.Schema.Types.ObjectId,
+    day:string,
+    targetBody : string, 
+    exerciseName : string, 
+    exerciseDescId :  [mongoose.Schema.Types.ObjectId],
 }
 
 const templateDescSchema: Schema = new mongoose.Schema({

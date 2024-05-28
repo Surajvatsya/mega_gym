@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface Template extends Document {
-    templateDescId: mongoose.Schema.Types.ObjectId,
+    templateDescId: [mongoose.Schema.Types.ObjectId],
     goal : string, 
     experience : string
 }

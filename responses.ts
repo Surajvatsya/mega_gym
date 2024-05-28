@@ -96,3 +96,16 @@ export interface OwnerDetails {
     gymLocationLat : String | null,
     gymLocationLon : String | null
 }
+
+export interface TemplateResponse {
+    templateDesc: {
+        day: string;
+        targetBody: string;
+        allExercise: {
+            exerciseName: string;
+            setNumber: number;
+            weight: number;
+            reps: number;
+        }[] | null;
+    }[] | null;
+}
