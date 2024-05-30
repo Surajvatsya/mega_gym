@@ -315,7 +315,7 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         trainerName: null,
         validTill: null,
         experience: null,
-        currWeekAttendance : null,
+        currentWeekAttendance : null,
         error: "Customer not found",
         template : {templateDesc : null}
       });
@@ -336,7 +336,7 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       profilePic: await getProfilePic(customer.id),
       goal: customer.goal,
       experience: customer.experience,
-      currWeekAttendance : null,
+      currentWeekAttendance : null,
       error: null,
       template : {templateDesc : null}
     });
@@ -352,7 +352,7 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       validTill: null,
       goal: null,
       experience: null,
-      currWeekAttendance : null,
+      currentWeekAttendance : null,
       currentFinishDate: null, error: "'Internal Server Error'",
       template : {templateDesc : null}
     });
@@ -480,7 +480,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       goal: null,
       experience: null,
       currentBeginDate: null,
-      currWeekAttendance : null,
+      currentWeekAttendance : null,
       template : {templateDesc : null}
     })
   }
@@ -502,7 +502,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         goal: customer.goal,
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
-        currWeekAttendance : thisWeekAttendance ? thisWeekAttendance : null,
+        currentWeekAttendance : thisWeekAttendance ? thisWeekAttendance : null,
         template : templateRes
       });
     }
@@ -519,7 +519,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         goal: null,
         experience: null,
         currentBeginDate: customer.currentBeginDate,
-        currWeekAttendance : null,
+        currentWeekAttendance : null,
         template : {templateDesc : null}
       });
     }
@@ -537,7 +537,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       goal: null,
       experience: null,
       currentBeginDate: null,
-      currWeekAttendance : null,
+      currentWeekAttendance : null,
       template : {templateDesc : null}
     });
   }

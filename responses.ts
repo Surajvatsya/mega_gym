@@ -74,7 +74,7 @@ export interface GetCustomerProfileResponse {
     profilePic: string | null,
     goal: string | null,
     experience: string | null,
-    currWeekAttendance: string | null, 
+    currentWeekAttendance: string | null, 
     template : TemplateResponse
 }
 
