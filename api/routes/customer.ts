@@ -10,6 +10,12 @@ const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/jwt");
 import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3, calculateValidTill } from '../utils'
 import express, { Request, Response } from 'express';
+import Owner from "../model/owner";
+import { getThisWeekAttendance } from '../routes/attendance';
+import Template from "../model/template";
+import TemplateDesc from "../model/templateDesc";
+import ExerciseDesc from "../model/exerciseDesc";
+import { TemplateResponse } from '../../responses';
 
 require("dotenv").config();
 const router = express.Router();
@@ -163,6 +169,9 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
     const requestBody: RegisterCustomerRequest = req.body
     const jwToken: JWToken = req.jwt
 
+    //omit it later a/q to some algo
+    // const trainee = Trainee.find({gymId: jwToken.ownerId}, {name : 1, _id : 0})
+
     const newPlan = new Plan({
       _id: new mongoose.Types.ObjectId(),
       gymId: jwToken.ownerId,
@@ -194,16 +203,16 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       currentPlanId: newPlan.id
     });
 
-    const current = new Date().getMonth;
-    console.log("new Date().getMonth", current);
+    // const current = new Date().getMonth;
+    // console.log("new Date().getMonth", current);
 
-
+    const todayDate = new Date().getDate();
     const createAttandanceRecord = new Attendance({
       _id: new mongoose.Types.ObjectId(),
       customerId,
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
-      days: 0
+      days: 0 | (1 << (todayDate - 1))
     })
 
     const [planResult, customerResult, profilePic] = await Promise.all([
@@ -288,7 +297,6 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
     console.error(err);
     res.status(500).json({ error: err.message });
   }
-
 })
 
 router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Response<GetCustomerProfileResponse>) => {
@@ -307,8 +315,9 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         trainerName: null,
         validTill: null,
         experience: null,
-
-        error: "Customer not found"
+        currWeekAttendance : null,
+        error: "Customer not found",
+        template : {templateDesc : null}
       });
     }
 
@@ -327,7 +336,9 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       profilePic: await getProfilePic(customer.id),
       goal: customer.goal,
       experience: customer.experience,
-      error: null
+      currWeekAttendance : null,
+      error: null,
+      template : {templateDesc : null}
     });
   } catch (err) {
     console.error("Error:", err);
@@ -341,8 +352,9 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       validTill: null,
       goal: null,
       experience: null,
-
-      currentFinishDate: null, error: "'Internal Server Error'"
+      currWeekAttendance : null,
+      currentFinishDate: null, error: "'Internal Server Error'",
+      template : {templateDesc : null}
     });
   }
 });
@@ -455,7 +467,6 @@ router.post("/markAttandance/:customerId", verifyToken, async (req, res) => {
 
 router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerProfileResponse>) => {
   const jwtoken: JWToken = req.jwt
-
   if (jwtoken == undefined) {
     res.status(404).json({
       contact: null,
@@ -468,38 +479,37 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       profilePic: null,
       goal: null,
       experience: null,
-      currentBeginDate: null
+      currentBeginDate: null,
+      currWeekAttendance : null,
+      template : {templateDesc : null}
     })
   }
-
   const customer = await Customer.findById(jwtoken.ownerId);
-
-
-
-
   if (customer) {
-
     if (customer.traineeId) {
       const trainer = await Trainee.findById(customer.traineeId);
-
-      res.status(404).json({
+      const thisWeekAttendance = await getThisWeekAttendance(jwtoken.ownerId)
+      const templateRes = await getTemplateByUserId (customer.id)
+      res.status(200).json({
         contact: customer.contact,
         error: null,
-        gymId: null,
+        gymId: customer.gymId.toString(),
         name: customer.name,
         trainerName: trainer ? trainer.name : null,
         validTill: calculateValidTill(customer.currentBeginDate, customer.currentFinishDate),
         currentFinishDate: customer.currentFinishDate,
-        profilePic: null,
-        goal: null,
-        experience: null,
-        currentBeginDate: customer.currentBeginDate
+        profilePic: customer.lastUpdatedProfilePic,
+        goal: customer.goal,
+        experience: customer.experience,
+        currentBeginDate: customer.currentBeginDate,
+        currWeekAttendance : thisWeekAttendance ? thisWeekAttendance : null,
+        template : templateRes
       });
     }
     else {
       res.status(404).json({
         contact: customer.contact,
-        error: null,
+        error: "trainer name not found",
         gymId: null,
         name: customer.name,
         trainerName: null,
@@ -508,15 +518,11 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         profilePic: null,
         goal: null,
         experience: null,
-        currentBeginDate: customer.currentBeginDate
+        currentBeginDate: customer.currentBeginDate,
+        currWeekAttendance : null,
+        template : {templateDesc : null}
       });
     }
-
-
-
-
-
-
   }
   else {
     res.status(404).json({
@@ -530,13 +536,69 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       profilePic: null,
       goal: null,
       experience: null,
-      currentBeginDate: null
+      currentBeginDate: null,
+      currWeekAttendance : null,
+      template : {templateDesc : null}
     });
   }
-
-
-
-
 });
+
+
+const getTemplateByUserId  = async (userId : string) : Promise<TemplateResponse> =>{
+  try {
+      const customerData = await Customer.findById(userId, {goal:1, experience:1, _id : 0});
+      if (!customerData) {
+          return { templateDesc: null };
+      }
+      const templateDescIds = await Template.find({goal: customerData?.goal, experience:customerData?.experience}, {templateDescId:1, _id :0});
+      if (templateDescIds.length === 0) {
+          return { templateDesc: null };
+      }
+
+      const templateDescIdList = templateDescIds[0].templateDescId;
+      const fetchTemplateDesc = await Promise.all (templateDescIdList.map(async (templateDescId:any)=>{
+          const templateDesc = await TemplateDesc.findById(templateDescId);
+              if (!templateDesc){
+                  console.log("templateDesc is null");
+                  return null;
+              }
+              const exerciseDesc = await Promise.all (templateDesc.exerciseDescId.map(async (exerciseId:any)=>{
+                  const exercise =  await ExerciseDesc.findById(exerciseId)
+                  return exercise ? {
+                      exerciseName: exercise.exerciseName,
+                      setNumber: exercise.setNumber,
+                      weight: exercise.weight,
+                      reps: exercise.reps
+                  } : null;
+                  }
+              ))
+
+              return {
+                  day: templateDesc.day,
+                  targetBody: templateDesc.targetBody,
+                  allExercise: exerciseDesc.filter(exercise => exercise !== null) as {
+                      exerciseName: string;
+                      setNumber: number;
+                      weight: number;
+                      reps: number;
+                  }[] 
+              }
+      }))
+      const validTemplateDesc = fetchTemplateDesc.filter(desc => desc !== null) as {
+          day: string;
+          targetBody: string;
+          allExercise: {
+              exerciseName: string;
+              setNumber: number;
+              weight: number;
+              reps: number;
+          }[] | null;
+      }[] ;
+      return {templateDesc : validTemplateDesc }; 
+  } catch (error) {
+      console.log(error);
+     return { templateDesc: null };
+  }
+}
 
 module.exports = router;

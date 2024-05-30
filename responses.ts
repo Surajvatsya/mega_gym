@@ -73,7 +73,9 @@ export interface GetCustomerProfileResponse {
     error: string | null,
     profilePic: string | null,
     goal: string | null,
-    experience: string | null
+    experience: string | null,
+    currWeekAttendance: string | null, 
+    template : TemplateResponse
 }
 
 export interface DuplicateResponseCheck {
@@ -94,8 +96,10 @@ export interface OwnerDetails {
     gymName: String | null,
     trainees: any | null,
     gymLocationLat : String | null,
-    gymLocationLon : String | null
+    gymLocationLon : String | null,
 }
+
+
 
 export interface TemplateResponse {
     templateDesc: {

@@ -9,9 +9,8 @@ interface customer extends Document {
   currentFinishDate: string,
   goal: string,
   experience: string,
-  traineeId: mongoose.Schema.Types.ObjectId,
   currentPlanId: mongoose.Schema.Types.ObjectId,
-
+  traineeId:string
   lastUpdatedProfilePic: string,
 }
 
@@ -39,7 +38,7 @@ const customerSchema: Schema = new mongoose.Schema({
   goal: String,
   experience: String,
   currentPlanId: mongoose.Schema.Types.ObjectId,
-  traineeId: mongoose.Schema.Types.ObjectId
+  traineeId:String
 });
 
 const customer = mongoose.model<customer>('customer', customerSchema);
