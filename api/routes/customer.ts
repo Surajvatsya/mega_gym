@@ -420,14 +420,12 @@ router.delete("/deleteCustomer/:customerId", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/markAttandance/:customerId", verifyToken, async (req, res) => {
+router.post("/markAttendance", verifyToken, async (req:any, res) => {
   try {
-
-
+    const customerId = req.jwt.ownerId;
     const currDay = new Date().getDate();
     const currMonth = new Date().getMonth() + 1;
     const currYear = new Date().getFullYear();
-    const customerId = req.params.customerId;
     if (currDay == 1) {
       const createAttandanceRecord = new Attendance({
         _id: new mongoose.Types.ObjectId(),
@@ -436,10 +434,13 @@ router.post("/markAttandance/:customerId", verifyToken, async (req, res) => {
         month: currMonth,
         days: 0
       })
+
+      await createAttandanceRecord.save();
     }
 
     const attendanceDays = await Attendance.findOne({ customerId, month: currMonth, year: currYear }, { days: 1, _id: 0 });
     console.log(" customerId, currMonth, currYear ", attendanceDays);
+    // const todayDate = new Date().getDate;
 
     if (!attendanceDays) {
       return res.status(404).json({ message: 'Attendance not found' });

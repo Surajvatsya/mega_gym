@@ -113,3 +113,13 @@ export interface TemplateResponse {
         }[] | null;
     }[] | null;
 }
+
+
+export interface LifeTimeAttendance {
+    sortedAttendance : {
+        month: number,
+        year: number,
+        days: string
+    }[] | null
+     
+}

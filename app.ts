@@ -7,6 +7,7 @@ const messageRoute = require("./api/routes/message");
 const awsRoute = require("./api/routes/aws")
 const notificationRoute = require("./api/routes/firebase");
 const templateRoutce = require("./api/routes/template");
+const attendanceRoute = require("./api/routes/attendance");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -45,4 +46,5 @@ app.use("/whatsapp", messageRoute);
 app.use("/notification", notificationRoute);
 app.use("/aws", awsRoute);
 app.use("/template", templateRoutce)
+app.use("/attendance", attendanceRoute)
 export default app;
