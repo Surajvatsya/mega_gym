@@ -13,7 +13,6 @@ import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3, calc
 import express, { Request, Response } from 'express';
 import Owner from "../model/owner";
 import { getThisWeekAttendance } from '../routes/attendance';
-import Template from "../model/template";
 import TemplateDesc from "../model/templateDesc";
 import ExerciseDesc from "../model/exerciseDesc";
 import { TemplateResponse } from '../../responses';
@@ -208,7 +207,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
     // const current = new Date().getMonth;
     // console.log("new Date().getMonth", current);
 
-    const todayDate = new Date().getDate();
+    // const todayDate = new Date().getDate();
     const createAttandanceRecord = new Attendance({
       _id: new mongoose.Types.ObjectId(),
       customerId,
@@ -492,7 +491,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
     if (customer.traineeId) {
       const trainer = await Trainee.findById(customer.traineeId);
       const thisWeekAttendance = await getThisWeekAttendance(jwtoken.ownerId)
-      const templateRes = await getTemplateByUserId(customer.id)
+      // const templateRes = await getTemplateByUserId (customer.id)
       res.status(200).json({
         contact: customer.contact,
         error: null,
@@ -505,8 +504,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         goal: customer.goal,
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
-        currentWeekAttendance: thisWeekAttendance ? thisWeekAttendance : null,
-        template: templateRes
+        currentWeekAttendance : thisWeekAttendance ? thisWeekAttendance : null,
+        template : {templateDesc : null}
       });
     }
     else {
@@ -547,62 +546,62 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
 });
 
 
-const getTemplateByUserId = async (userId: string): Promise<TemplateResponse> => {
-  try {
-    const customerData = await Customer.findById(userId, { goal: 1, experience: 1, _id: 0 });
-    if (!customerData) {
-      return { templateDesc: null };
-    }
-    const templateDescIds = await Template.find({ goal: customerData?.goal, experience: customerData?.experience }, { templateDescId: 1, _id: 0 });
-    if (templateDescIds.length === 0) {
-      return { templateDesc: null };
-    }
+// const getTemplateByUserId  = async (userId : string) : Promise<TemplateResponse> =>{
+//   try {
+//       const customerData = await Customer.findById(userId, {goal:1, experience:1, _id : 0});
+//       if (!customerData) {
+//           return { templateDesc: null };
+//       }
+//       const templateDescIds = await Template.find({goal: customerData?.goal, experience:customerData?.experience}, {templateDescId:1, _id :0});
+//       if (templateDescIds.length === 0) {
+//           return { templateDesc: null };
+//       }
 
-    const templateDescIdList = templateDescIds[0].templateDescId;
-    const fetchTemplateDesc = await Promise.all(templateDescIdList.map(async (templateDescId: any) => {
-      const templateDesc = await TemplateDesc.findById(templateDescId);
-      if (!templateDesc) {
-        console.log("templateDesc is null");
-        return null;
-      }
-      const exerciseDesc = await Promise.all(templateDesc.exerciseDescId.map(async (exerciseId: any) => {
-        const exercise = await ExerciseDesc.findById(exerciseId)
-        return exercise ? {
-          exerciseName: exercise.exerciseName,
-          setNumber: exercise.setNumber,
-          weight: exercise.weight,
-          reps: exercise.reps
-        } : null;
-      }
-      ))
+//       const templateDescIdList = templateDescIds[0].templateDescId;
+//       const fetchTemplateDesc = await Promise.all (templateDescIdList.map(async (templateDescId:any)=>{
+//           const templateDesc = await TemplateDesc.findById(templateDescId);
+//               if (!templateDesc){
+//                   console.log("templateDesc is null");
+//                   return null;
+//               }
+//               const exerciseDesc = await Promise.all (templateDesc.exerciseDescId.map(async (exerciseId:any)=>{
+//                   const exercise =  await ExerciseDesc.findById(exerciseId)
+//                   return exercise ? {
+//                       exerciseName: exercise.exerciseName,
+//                       setNumber: exercise.setNumber,
+//                       weight: exercise.weight,
+//                       reps: exercise.reps
+//                   } : null;
+//                   }
+//               ))
 
-      return {
-        day: templateDesc.day,
-        targetBody: templateDesc.targetBody,
-        allExercise: exerciseDesc.filter(exercise => exercise !== null) as {
-          exerciseName: string;
-          setNumber: number;
-          weight: number;
-          reps: number;
-        }[]
-      }
-    }))
-    const validTemplateDesc = fetchTemplateDesc.filter(desc => desc !== null) as {
-      day: string;
-      targetBody: string;
-      allExercise: {
-        exerciseName: string;
-        setNumber: number;
-        weight: number;
-        reps: number;
-      }[] | null;
-    }[];
-    return { templateDesc: validTemplateDesc };
-  } catch (error) {
-    console.log(error);
-    return { templateDesc: null };
-  }
-}
+//               return {
+//                   day: templateDesc.day,
+//                   targetBody: templateDesc.targetBody,
+//                   allExercise: exerciseDesc.filter(exercise => exercise !== null) as {
+//                       exerciseName: string;
+//                       setNumber: number;
+//                       weight: number;
+//                       reps: number;
+//                   }[] 
+//               }
+//       }))
+//       const validTemplateDesc = fetchTemplateDesc.filter(desc => desc !== null) as {
+//           day: string;
+//           targetBody: string;
+//           allExercise: {
+//               exerciseName: string;
+//               setNumber: number;
+//               weight: number;
+//               reps: number;
+//           }[] | null;
+//       }[] ;
+//       return {templateDesc : validTemplateDesc }; 
+//   } catch (error) {
+//       console.log(error);
+//      return { templateDesc: null };
+//   }
+// }
 
 router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<WorkoutAnalysisResponse>) => {
 

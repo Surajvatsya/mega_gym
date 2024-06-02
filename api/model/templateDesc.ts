@@ -3,14 +3,14 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface TemplateDesc extends Document {
     day:string,
     targetBody : string, 
-    exerciseName : string, 
+    customerId : string, 
     exerciseDescId :  [mongoose.Schema.Types.ObjectId],
 }
 
 const templateDescSchema: Schema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     day:String,
-    targetBody : String, 
+    customerId : String, 
     exerciseDescId :  [mongoose.Schema.Types.ObjectId],
 });
 

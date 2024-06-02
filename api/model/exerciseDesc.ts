@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface ExerciseDesc extends Document {
-    exerciseName : string, 
+    exerciseId : string, 
     setNumber : number,
     weight : number,
     reps : number
@@ -9,7 +9,7 @@ interface ExerciseDesc extends Document {
 
 const exerciseDescSchema: Schema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
-    exerciseName : String,
+    exerciseId : String,
     setNumber : Number,
     weight : Number,
     reps : Number
