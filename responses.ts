@@ -74,8 +74,8 @@ export interface GetCustomerProfileResponse {
     profilePic: string | null,
     goal: string | null,
     experience: string | null,
-    currentWeekAttendance: string | null, 
-    template : TemplateResponse
+    currentWeekAttendance: string | null,
+    template: TemplateResponse
 }
 
 export interface DuplicateResponseCheck {
@@ -95,8 +95,8 @@ export interface OwnerDetails {
     name: String | null,
     gymName: String | null,
     trainees: any | null,
-    gymLocationLat : String | null,
-    gymLocationLon : String | null,
+    gymLocationLat: String | null,
+    gymLocationLon: String | null,
 }
 
 
@@ -116,10 +116,36 @@ export interface TemplateResponse {
 
 
 export interface LifeTimeAttendance {
-    sortedAttendance : {
+    sortedAttendance: {
         month: number,
         year: number,
         days: string
     }[] | null
-     
+
+}
+
+export interface WorkoutLogsResponse {
+    message: string
+}
+
+export interface WorkoutAnalysisResponse {
+
+    comparisionData: {
+        titles: string [],
+        data: number [],
+        maxLimitOfData: number,
+        top: number,
+        highlightTitle: number
+        minLimitOfData: number
+    },
+
+    growthData: {
+        titles: string [],
+        data: number [],
+        maxLimitOfData: number
+        minLimitOfData: number
+    },
+
+    error: string | null
+
 }

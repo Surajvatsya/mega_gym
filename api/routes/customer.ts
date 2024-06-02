@@ -1,9 +1,10 @@
-import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest } from "../../requests";
-import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse } from "../../responses";
+import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest, workoutAnalysisRequest } from "../../requests";
+import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse, WorkoutAnalysisResponse } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
 import Trainee from '../model/trainee'
 import Plan from '../model/plan'
+import Exercise from '../model/exercise'
 import Attendance from '../model/attendance'
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -16,6 +17,7 @@ import Template from "../model/template";
 import TemplateDesc from "../model/templateDesc";
 import ExerciseDesc from "../model/exerciseDesc";
 import { TemplateResponse } from '../../responses';
+import WorkoutLog, { WorkoutLogs } from "../model/workoutLog";
 
 require("dotenv").config();
 const router = express.Router();
@@ -212,7 +214,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       customerId,
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
-      days: 0 
+      days: 0
     })
 
     const [planResult, customerResult, profilePic] = await Promise.all([
@@ -315,9 +317,9 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         trainerName: null,
         validTill: null,
         experience: null,
-        currentWeekAttendance : null,
+        currentWeekAttendance: null,
         error: "Customer not found",
-        template : {templateDesc : null}
+        template: { templateDesc: null }
       });
     }
 
@@ -336,9 +338,9 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       profilePic: await getProfilePic(customer.id),
       goal: customer.goal,
       experience: customer.experience,
-      currentWeekAttendance : null,
+      currentWeekAttendance: null,
       error: null,
-      template : {templateDesc : null}
+      template: { templateDesc: null }
     });
   } catch (err) {
     console.error("Error:", err);
@@ -352,9 +354,9 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       validTill: null,
       goal: null,
       experience: null,
-      currentWeekAttendance : null,
+      currentWeekAttendance: null,
       currentFinishDate: null, error: "'Internal Server Error'",
-      template : {templateDesc : null}
+      template: { templateDesc: null }
     });
   }
 });
@@ -420,7 +422,7 @@ router.delete("/deleteCustomer/:customerId", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/markAttendance", verifyToken, async (req:any, res) => {
+router.post("/markAttendance", verifyToken, async (req: any, res) => {
   try {
     const customerId = req.jwt.ownerId;
     const currDay = new Date().getDate();
@@ -481,8 +483,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       goal: null,
       experience: null,
       currentBeginDate: null,
-      currentWeekAttendance : null,
-      template : {templateDesc : null}
+      currentWeekAttendance: null,
+      template: { templateDesc: null }
     })
   }
   const customer = await Customer.findById(jwtoken.ownerId);
@@ -490,7 +492,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
     if (customer.traineeId) {
       const trainer = await Trainee.findById(customer.traineeId);
       const thisWeekAttendance = await getThisWeekAttendance(jwtoken.ownerId)
-      const templateRes = await getTemplateByUserId (customer.id)
+      const templateRes = await getTemplateByUserId(customer.id)
       res.status(200).json({
         contact: customer.contact,
         error: null,
@@ -503,8 +505,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         goal: customer.goal,
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
-        currentWeekAttendance : thisWeekAttendance ? thisWeekAttendance : null,
-        template : templateRes
+        currentWeekAttendance: thisWeekAttendance ? thisWeekAttendance : null,
+        template: templateRes
       });
     }
     else {
@@ -520,8 +522,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         goal: null,
         experience: null,
         currentBeginDate: customer.currentBeginDate,
-        currentWeekAttendance : null,
-        template : {templateDesc : null}
+        currentWeekAttendance: null,
+        template: { templateDesc: null }
       });
     }
   }
@@ -538,68 +540,245 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       goal: null,
       experience: null,
       currentBeginDate: null,
-      currentWeekAttendance : null,
-      template : {templateDesc : null}
+      currentWeekAttendance: null,
+      template: { templateDesc: null }
     });
   }
 });
 
 
-const getTemplateByUserId  = async (userId : string) : Promise<TemplateResponse> =>{
+const getTemplateByUserId = async (userId: string): Promise<TemplateResponse> => {
   try {
-      const customerData = await Customer.findById(userId, {goal:1, experience:1, _id : 0});
-      if (!customerData) {
-          return { templateDesc: null };
-      }
-      const templateDescIds = await Template.find({goal: customerData?.goal, experience:customerData?.experience}, {templateDescId:1, _id :0});
-      if (templateDescIds.length === 0) {
-          return { templateDesc: null };
-      }
+    const customerData = await Customer.findById(userId, { goal: 1, experience: 1, _id: 0 });
+    if (!customerData) {
+      return { templateDesc: null };
+    }
+    const templateDescIds = await Template.find({ goal: customerData?.goal, experience: customerData?.experience }, { templateDescId: 1, _id: 0 });
+    if (templateDescIds.length === 0) {
+      return { templateDesc: null };
+    }
 
-      const templateDescIdList = templateDescIds[0].templateDescId;
-      const fetchTemplateDesc = await Promise.all (templateDescIdList.map(async (templateDescId:any)=>{
-          const templateDesc = await TemplateDesc.findById(templateDescId);
-              if (!templateDesc){
-                  console.log("templateDesc is null");
-                  return null;
-              }
-              const exerciseDesc = await Promise.all (templateDesc.exerciseDescId.map(async (exerciseId:any)=>{
-                  const exercise =  await ExerciseDesc.findById(exerciseId)
-                  return exercise ? {
-                      exerciseName: exercise.exerciseName,
-                      setNumber: exercise.setNumber,
-                      weight: exercise.weight,
-                      reps: exercise.reps
-                  } : null;
-                  }
-              ))
+    const templateDescIdList = templateDescIds[0].templateDescId;
+    const fetchTemplateDesc = await Promise.all(templateDescIdList.map(async (templateDescId: any) => {
+      const templateDesc = await TemplateDesc.findById(templateDescId);
+      if (!templateDesc) {
+        console.log("templateDesc is null");
+        return null;
+      }
+      const exerciseDesc = await Promise.all(templateDesc.exerciseDescId.map(async (exerciseId: any) => {
+        const exercise = await ExerciseDesc.findById(exerciseId)
+        return exercise ? {
+          exerciseName: exercise.exerciseName,
+          setNumber: exercise.setNumber,
+          weight: exercise.weight,
+          reps: exercise.reps
+        } : null;
+      }
+      ))
 
-              return {
-                  day: templateDesc.day,
-                  targetBody: templateDesc.targetBody,
-                  allExercise: exerciseDesc.filter(exercise => exercise !== null) as {
-                      exerciseName: string;
-                      setNumber: number;
-                      weight: number;
-                      reps: number;
-                  }[] 
-              }
-      }))
-      const validTemplateDesc = fetchTemplateDesc.filter(desc => desc !== null) as {
-          day: string;
-          targetBody: string;
-          allExercise: {
-              exerciseName: string;
-              setNumber: number;
-              weight: number;
-              reps: number;
-          }[] | null;
-      }[] ;
-      return {templateDesc : validTemplateDesc }; 
+      return {
+        day: templateDesc.day,
+        targetBody: templateDesc.targetBody,
+        allExercise: exerciseDesc.filter(exercise => exercise !== null) as {
+          exerciseName: string;
+          setNumber: number;
+          weight: number;
+          reps: number;
+        }[]
+      }
+    }))
+    const validTemplateDesc = fetchTemplateDesc.filter(desc => desc !== null) as {
+      day: string;
+      targetBody: string;
+      allExercise: {
+        exerciseName: string;
+        setNumber: number;
+        weight: number;
+        reps: number;
+      }[] | null;
+    }[];
+    return { templateDesc: validTemplateDesc };
   } catch (error) {
-      console.log(error);
-     return { templateDesc: null };
+    console.log(error);
+    return { templateDesc: null };
   }
 }
+
+router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<WorkoutAnalysisResponse>) => {
+
+  const jwtoken: JWToken = req.jwt
+  const reqBody: workoutAnalysisRequest = req.body;
+
+  const exercise = await Exercise.findOne({ name: reqBody.exerciseName });
+
+  if (exercise) {
+
+    const initialGrowthGroup: any = {};
+
+
+    const customerId = jwtoken.ownerId;
+    const exerciseId = exercise.id ?? "";
+
+    const logs = await WorkoutLog.find({ customerId, exerciseId }) as WorkoutLogs[];
+
+    logs.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+
+    const groupedLogs: Record<string, WorkoutLogs[]> = logs.reduce((acc, log) => {
+
+      const timestampDate = new Date(Number(log.timestamp));
+
+
+      // Extract year, month, and day components
+      const year = timestampDate.getFullYear();
+      const month = timestampDate.getMonth() + 1;
+      const day = timestampDate.getDate();
+
+      // Create a composite key using year, month, and day
+      const key = `${year}-${month}-${day}`;
+
+
+      // Use the composite key to group logs
+      acc[key] = [...(acc[key] || []), log];
+      return acc;
+    }, initialGrowthGroup);
+
+    // Map grouped logs to growth data
+    const growthData = Object.entries(groupedLogs).map(([keys, logs]) => {
+      const totalProduct = logs.reduce((total, log) => total + log.reps * log.weight, 0);
+      return { keys, totalProduct };
+    });
+
+    // Get unique dates and select the last 10 dates
+    const uniqueDates = [...new Set(growthData.map(item => item.keys))];
+    const last10Dates = uniqueDates.sort().slice(-10);
+
+    // Filter growthData for the last 10 dates
+    const top10GrowthData = growthData.filter(item => last10Dates.includes(item.keys));
+
+    // Extract titles and data
+    const growthTitles: string[] = Array.from({ length: top10GrowthData.length }, (_, i) => `s${i + 1}`);
+    const growthDatas: number[] = top10GrowthData.map(item => item.totalProduct);
+
+    const pipeline: any = [
+
+      {
+        $match:
+        {
+          "exerciseId": exerciseId,
+          "reps": { $gte: 8 }
+        }
+      },
+
+      // Group workout logs by customer and find the maximum weight for each customer
+      {
+        $group: {
+          _id: "$customerId", // Assuming the field is called 'customerId'
+          maxWeight: { $max: "$weight" } // Assuming the field containing weight is 'weight'
+        }
+      },
+      // Define buckets for weight ranges
+      {
+        $project: {
+          bucket: {
+            $switch: {
+              branches: [
+                { case: { $and: [{ $gte: ["$maxWeight", 0] }, { $lt: ["$maxWeight", 10] }] }, then: "10" },
+                { case: { $and: [{ $gte: ["$maxWeight", 10] }, { $lt: ["$maxWeight", 20] }] }, then: "20" },
+                { case: { $and: [{ $gte: ["$maxWeight", 20] }, { $lt: ["$maxWeight", 30] }] }, then: "30" },
+                { case: { $and: [{ $gte: ["$maxWeight", 30] }, { $lt: ["$maxWeight", 40] }] }, then: "40" },
+                { case: { $and: [{ $gte: ["$maxWeight", 40] }, { $lt: ["$maxWeight", 50] }] }, then: "50" },
+                { case: { $and: [{ $gte: ["$maxWeight", 50] }, { $lt: ["$maxWeight", 60] }] }, then: "60" },
+                { case: { $and: [{ $gte: ["$maxWeight", 60] }, { $lt: ["$maxWeight", 70] }] }, then: "70" },
+                { case: { $and: [{ $gte: ["$maxWeight", 70] }, { $lt: ["$maxWeight", 80] }] }, then: "80" },
+                { case: { $and: [{ $gte: ["$maxWeight", 80] }, { $lt: ["$maxWeight", 90] }] }, then: "90" },
+                { case: { $and: [{ $gte: ["$maxWeight", 90] }, { $lte: ["$maxWeight", 100] }] }, then: "100" }
+              ],
+              default: "Other" // If the weight doesn't fall into any defined range
+            }
+          }
+        }
+      },
+      // Count the number of customers in each bucket
+      {
+        $group: {
+          _id: "$bucket",
+          count: { $sum: 1 }
+        }
+      },
+      // Optionally, sort the buckets by weight range
+      {
+        $sort: { _id: 1 }
+      }
+    ];
+
+
+
+    const bucketCounts = await WorkoutLog.aggregate(pipeline);
+
+
+
+
+    const userMaxWeightLog = await WorkoutLog.find({ customerId: jwtoken.ownerId }).sort({ weight: -1 }).limit(1)
+
+
+    const userMaxWeight = Math.ceil(userMaxWeightLog[0].weight / 10) * 10;
+    const userIndex = bucketCounts.findIndex(bucket => bucket._id == userMaxWeight)
+
+
+    const allUsersCount = bucketCounts.reduce((total, bucket) => total + bucket.count, 0)
+    const usersWeightLessThanEqCount = bucketCounts.slice(0, userIndex + 1).reduce((total, bucket) => total + bucket.count, 0);
+
+
+    const maxCount = Math.max(...bucketCounts.map(bucket => bucket.count))
+
+    const percentile = Math.round((usersWeightLessThanEqCount / allUsersCount) * 100);
+
+
+
+    res.status(200).json({
+      comparisionData: {
+        titles: bucketCounts.map((bucket) => bucket._id),
+        data: bucketCounts.map((bucket) => bucket.count),
+        maxLimitOfData: maxCount,
+        minLimitOfData: 0,
+        top: percentile,
+        highlightTitle: userIndex
+      },
+
+      growthData: {
+        titles: growthTitles,
+        data: growthDatas,
+        maxLimitOfData: Math.ceil(Math.max(...growthDatas) * 1.2),
+        minLimitOfData: Math.floor(Math.min(...growthDatas) * 0.8)
+      },
+
+      error: null
+
+    })
+
+  }
+  else {
+    res.status(404).json({
+      comparisionData: {
+        titles: [],
+        data: [],
+        minLimitOfData: 0,
+        maxLimitOfData: 0,
+        top: 0,
+        highlightTitle: 0
+      },
+
+      growthData: {
+        titles: [],
+        data: [],
+        maxLimitOfData: 0,
+        minLimitOfData: 0
+      },
+
+      error: "Exercise name " + reqBody.exerciseName + " not found"
+
+    });
+  }
+})
 
 module.exports = router;

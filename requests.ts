@@ -10,7 +10,7 @@ export interface SignUpRequest {
     upiId: String,
     deviceToken: String | null
     lat: String | null,
-    lon: String| null,
+    lon: String | null,
     trainees: TraineeDetail[]
 }
 
@@ -59,13 +59,13 @@ export interface TemplateRequest {
         targetBody: String,
         allExercise: [
             {
-            exerciseName: String,
-            exerciseDesc: {
-                setNumber: Number,
-                weight: Number,
-                reps: Number
+                exerciseName: String,
+                exerciseDesc: {
+                    setNumber: Number,
+                    weight: Number,
+                    reps: Number
+                }
             }
-        }
         ]
     }]
 }
@@ -73,4 +73,29 @@ export interface TemplateRequest {
 export interface UpdateLocationRequest {
     lat: String,
     lon: String
+}
+
+export interface AddWorkoutLogRequest {
+    exerciseName: string,
+    setIndex: number,
+    weight: number,
+    reps: number
+}
+
+export interface DeleteWorkoutLogRequest {
+    exerciseName: string,
+    setIndex: number
+}
+
+
+export interface WorkoutLogsResponse {
+    message: String
+}
+
+export interface AuthenticatedRequest<T> extends Request {
+    jwt: JWToken;
+}
+
+export interface workoutAnalysisRequest {
+    exerciseName: string
 }
