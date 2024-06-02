@@ -212,7 +212,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       customerId,
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
-      days: 0 | (1 << (todayDate - 1))
+      days: 0 
     })
 
     const [planResult, customerResult, profilePic] = await Promise.all([
