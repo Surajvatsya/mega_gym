@@ -1,5 +1,5 @@
 import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest, workoutAnalysisRequest } from "../../requests";
-import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse, WorkoutAnalysisResponse } from "../../responses";
+import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse, WorkoutAnalysisResponse, IdCardResponse } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
 import Trainee from '../model/trainee'
@@ -504,8 +504,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         goal: customer.goal,
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
-        currentWeekAttendance : thisWeekAttendance ? thisWeekAttendance : null,
-        template : {templateDesc : null}
+        currentWeekAttendance: thisWeekAttendance ? thisWeekAttendance : null,
+        template: { templateDesc: null }
       });
     }
     else {
@@ -778,6 +778,45 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     });
   }
+})
+
+
+router.get('/idCard', verifyToken, async (req: any, res: Response<IdCardResponse>) => {
+
+  const jwToken: JWToken = req.jwt
+
+  const customer = await Customer.findById(jwToken.ownerId);
+
+  if (customer) {
+
+    const owner = await Owner.findById(customer.gymId);
+    
+
+    res.status(200).json({
+      gymName: owner ? owner.gymName : "Gym",
+      gymContact: owner ? owner.contact : "",
+      memberName: customer.name,
+      planDue: customer.currentFinishDate,
+      planDuration: calculateValidTill(customer.currentBeginDate,customer.currentFinishDate),
+      planid: customer.currentPlanId.toString(),
+      customerPic: await getProfilePic(customer.id),
+      error: null
+    })
+
+  }
+  else {
+    res.status(404).json({
+      gymName: null,
+      gymContact: null,
+      memberName: null,
+      planDue: null,
+      planDuration: null,
+      planid: null,
+      customerPic: null,
+      error: "Customer not found"
+    })
+  }
+
 })
 
 module.exports = router;

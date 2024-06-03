@@ -131,8 +131,8 @@ export interface WorkoutLogsResponse {
 export interface WorkoutAnalysisResponse {
 
     comparisionData: {
-        titles: string [],
-        data: number [],
+        titles: string[],
+        data: number[],
         maxLimitOfData: number,
         top: number,
         highlightTitle: number
@@ -140,12 +140,23 @@ export interface WorkoutAnalysisResponse {
     },
 
     growthData: {
-        titles: string [],
-        data: number [],
+        titles: string[],
+        data: number[],
         maxLimitOfData: number
         minLimitOfData: number
     },
 
     error: string | null
+}
 
+export interface IdCardResponse {
+
+    gymName: String | null,
+    gymContact: String | null,
+    memberName: String | null,
+    planDue: String | null,
+    planDuration: number | null,
+    planid: String | null,
+    customerPic: String | null,
+    error: String | null
 }

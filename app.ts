@@ -9,6 +9,7 @@ const notificationRoute = require("./api/routes/firebase");
 const templateRoutce = require("./api/routes/template");
 const attendanceRoute = require("./api/routes/attendance");
 const workoutLogsRoute = require("./api/routes/workoutLog");
+const exerciseRoute = require("./api/routes/exercise");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -49,4 +50,6 @@ app.use("/aws", awsRoute);
 app.use("/template", templateRoutce)
 app.use("/attendance", attendanceRoute)
 app.use("/workoutLog", workoutLogsRoute)
+app.use("/exercise", exerciseRoute)
+
 export default app;
