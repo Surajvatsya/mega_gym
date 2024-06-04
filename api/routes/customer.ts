@@ -1,5 +1,5 @@
 import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest, workoutAnalysisRequest } from "../../requests";
-import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse, WorkoutAnalysisResponse, IdCardResponse } from "../../responses";
+import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse, WorkoutAnalysisResponse, IdCardResponse, ExerciseSetAndReps, GetTemplateResponse, ExerciseTemplate } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
 import Trainee from '../model/trainee'
@@ -13,10 +13,10 @@ import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3, calc
 import express, { Request, Response } from 'express';
 import Owner from "../model/owner";
 import { getThisWeekAttendance } from '../routes/attendance';
-import TemplateDesc from "../model/templateDesc";
-import ExerciseDesc from "../model/exerciseDesc";
 import { TemplateResponse } from '../../responses';
 import WorkoutLog, { WorkoutLogs } from "../model/workoutLog";
+import Template from "../model/template";
+import ExerciseDescription from "../model/exerciseDescription";
 
 require("dotenv").config();
 const router = express.Router();
@@ -545,63 +545,99 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
   }
 });
 
+router.post('/addExercise', verifyToken, async (req: any, res: any) => {
 
-// const getTemplateByUserId  = async (userId : string) : Promise<TemplateResponse> =>{
-//   try {
-//       const customerData = await Customer.findById(userId, {goal:1, experience:1, _id : 0});
-//       if (!customerData) {
-//           return { templateDesc: null };
-//       }
-//       const templateDescIds = await Template.find({goal: customerData?.goal, experience:customerData?.experience}, {templateDescId:1, _id :0});
-//       if (templateDescIds.length === 0) {
-//           return { templateDesc: null };
-//       }
+  const jwToken: JWToken = req.jwt;
+  const customer = await Customer.findById(jwToken.ownerId);
+  const exerciseId = req.body.exerciseId;
 
-//       const templateDescIdList = templateDescIds[0].templateDescId;
-//       const fetchTemplateDesc = await Promise.all (templateDescIdList.map(async (templateDescId:any)=>{
-//           const templateDesc = await TemplateDesc.findById(templateDescId);
-//               if (!templateDesc){
-//                   console.log("templateDesc is null");
-//                   return null;
-//               }
-//               const exerciseDesc = await Promise.all (templateDesc.exerciseDescId.map(async (exerciseId:any)=>{
-//                   const exercise =  await ExerciseDesc.findById(exerciseId)
-//                   return exercise ? {
-//                       exerciseName: exercise.exerciseName,
-//                       setNumber: exercise.setNumber,
-//                       weight: exercise.weight,
-//                       reps: exercise.reps
-//                   } : null;
-//                   }
-//               ))
+  if (customer) {
 
-//               return {
-//                   day: templateDesc.day,
-//                   targetBody: templateDesc.targetBody,
-//                   allExercise: exerciseDesc.filter(exercise => exercise !== null) as {
-//                       exerciseName: string;
-//                       setNumber: number;
-//                       weight: number;
-//                       reps: number;
-//                   }[] 
-//               }
-//       }))
-//       const validTemplateDesc = fetchTemplateDesc.filter(desc => desc !== null) as {
-//           day: string;
-//           targetBody: string;
-//           allExercise: {
-//               exerciseName: string;
-//               setNumber: number;
-//               weight: number;
-//               reps: number;
-//           }[] | null;
-//       }[] ;
-//       return {templateDesc : validTemplateDesc }; 
-//   } catch (error) {
-//       console.log(error);
-//      return { templateDesc: null };
-//   }
-// }
+    const day = new Date().getDay();
+
+
+    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day });
+
+    if (customerTemplate) {
+      const exerciseDescription = new ExerciseDescription({
+        _id: new mongoose.Types.ObjectId(),
+        templateId: customerTemplate.id.toString(),
+        exerciseId: exerciseId,
+        setIndex: -1,
+        weight: 0,
+        reps: 0
+      })
+
+      await exerciseDescription.save();
+      res.status(200).json({ message: "Exercise is saved" });
+
+    }
+    else {
+      res.status(404).json({ message: "Customer template not found" });
+
+    }
+
+  }
+  else {
+    res.status(404).json({ message: "Customer not found" });
+  }
+
+})
+
+router.get('/template', verifyToken, async (req: any, res: Response<ExerciseTemplate[]>) => {
+
+  const jwToken: JWToken = req.jwt;
+  const customer = await Customer.findById(jwToken.ownerId);
+
+  if (customer) {
+    const day = new Date().getDay();
+    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day });
+    if (customerTemplate) {
+
+      const allExerciseDescription = await ExerciseDescription.aggregate([
+        { $match: { templateId: customerTemplate.id } },
+        { $group: { _id: "$exerciseId", exercises: { $push: "$$ROOT" } } },
+        { $unwind: "$exercises" },
+        { $sort: { "exercises.setIndex": 1 } },
+        { $group: { _id: "$_id", exercises: { $push: "$exercises" } } }
+      ]);
+
+      const response = await Promise.all(allExerciseDescription.map(async (exerciseIdAndExercise) => {
+
+        const exercise = await Exercise.findById(exerciseIdAndExercise._id);
+
+        const information = exerciseIdAndExercise.exercises.map((exerciseInformation: any) => {
+          return {
+            setNo: exerciseInformation.setIndex,
+            weight: exerciseInformation.weight,
+            reps: exerciseInformation.reps,
+            doneToday: false,
+          } as ExerciseSetAndReps;
+        });
+
+
+        return {
+          exerciseId: exerciseIdAndExercise._id,
+          exerciseName: exercise ? exercise.name : '' as String,
+          exerciseInformation: information
+        } as ExerciseTemplate;
+
+      }));
+
+
+      res.status(200).json(response)
+      return;
+
+    }
+  }
+  else {
+    res.status(200).json([])
+    return;
+
+  }
+  res.status(200).json([])
+  return;
+});
 
 router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<WorkoutAnalysisResponse>) => {
 
@@ -719,8 +755,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     const userMaxWeightLog = await WorkoutLog.find({ customerId: jwtoken.ownerId }).sort({ weight: -1 }).limit(1)
 
-
-    const userMaxWeight = Math.ceil(userMaxWeightLog[0].weight / 10) * 10;
+    const userMaxWeight = userMaxWeightLog[0] != undefined ? Math.ceil(userMaxWeightLog[0].weight / 10) * 10 : 0;
     const userIndex = bucketCounts.findIndex(bucket => bucket._id == userMaxWeight)
 
 
@@ -728,27 +763,25 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
     const usersWeightLessThanEqCount = bucketCounts.slice(0, userIndex + 1).reduce((total, bucket) => total + bucket.count, 0);
 
 
-    const maxCount = Math.max(...bucketCounts.map(bucket => bucket.count))
+    const maxCount = Math.max(...bucketCounts.map(bucket => bucket.count)) ?? 0
 
     const percentile = Math.round((usersWeightLessThanEqCount / allUsersCount) * 100);
-
-
 
     res.status(200).json({
       comparisionData: {
         titles: bucketCounts.map((bucket) => bucket._id),
         data: bucketCounts.map((bucket) => bucket.count),
-        maxLimitOfData: maxCount,
+        maxLimitOfData: maxCount != -Infinity ? maxCount : 0,
         minLimitOfData: 0,
-        top: percentile,
+        top: Number.isNaN(percentile) ? 0 : percentile,
         highlightTitle: userIndex
       },
 
       growthData: {
         titles: growthTitles,
         data: growthDatas,
-        maxLimitOfData: Math.ceil(Math.max(...growthDatas) * 1.2),
-        minLimitOfData: Math.floor(Math.min(...growthDatas) * 0.8)
+        maxLimitOfData: Math.ceil(Math.max(...growthDatas) * 1.2) != -Infinity ? Math.ceil(Math.max(...growthDatas) * 1.2) : 0,
+        minLimitOfData: Math.floor(Math.min(...growthDatas) * 0.8) != Infinity ? Math.floor(Math.min(...growthDatas) * 0.8) : 0
       },
 
       error: null
@@ -790,14 +823,14 @@ router.get('/idCard', verifyToken, async (req: any, res: Response<IdCardResponse
   if (customer) {
 
     const owner = await Owner.findById(customer.gymId);
-    
+
 
     res.status(200).json({
       gymName: owner ? owner.gymName : "Gym",
       gymContact: owner ? owner.contact : "",
       memberName: customer.name,
       planDue: customer.currentFinishDate,
-      planDuration: calculateValidTill(customer.currentBeginDate,customer.currentFinishDate),
+      planDuration: calculateValidTill(customer.currentBeginDate, customer.currentFinishDate),
       planid: customer.currentPlanId.toString(),
       customerPic: await getProfilePic(customer.id),
       error: null

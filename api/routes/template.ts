@@ -1,7 +1,5 @@
 import express, { Request, Response } from 'express';
 import Customer from "../model/customer";
-import TemplateDesc from "../model/templateDesc";
-import ExerciseDesc from "../model/exerciseDesc";
 const mongoose = require("mongoose");
 const verifyToken = require("../middleware/jwt");
 import { TemplateRequest } from "../../requests";

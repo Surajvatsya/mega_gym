@@ -40,12 +40,12 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
             return res.status(404).json({ sortedAttendance: null });
 
         }
-        const lifeTImeAttandance_ = lifeTImeAttandance.map((att)=>{
+        const lifeTImeAttandance_ = lifeTImeAttandance.map((att) => {
             const attendanceInString = att.days.toString(2).split('').reverse().join('');
-            return{
-                month : att.month,
-                year : att.year,
-                days : attendanceInString
+            return {
+                month: att.month,
+                year: att.year,
+                days: attendanceInString
             }
         })
 
@@ -53,7 +53,7 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
 
         console.log(lifeTImeAttandance);
 
-        res.status(200).json({sortedAttendance});
+        res.status(200).json({ sortedAttendance });
 
     }
     catch (error) {

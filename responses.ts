@@ -160,3 +160,20 @@ export interface IdCardResponse {
     customerPic: String | null,
     error: String | null
 }
+
+export interface GetTemplateResponse {
+    exerciseTemplate: ExerciseTemplate []
+}
+
+export interface ExerciseTemplate {
+    exerciseName: String,
+    exerciseId: String,
+    exerciseInformation: ExerciseSetAndReps []
+}
+
+export interface ExerciseSetAndReps {
+    setNo: number,
+    weight: number,
+    reps: number,
+    doneToday: boolean
+}
