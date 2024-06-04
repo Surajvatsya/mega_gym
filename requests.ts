@@ -99,3 +99,15 @@ export interface AuthenticatedRequest<T> extends Request {
 export interface workoutAnalysisRequest {
     exerciseName: string
 }
+
+export interface AddSetRequest {
+    exerciseId: String,
+    reps: number,
+    weight: number
+}
+
+export interface UpdateSetRequest {
+    exerciseDescriptionId: String,
+    reps: number,
+    weight: number
+}

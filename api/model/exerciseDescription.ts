@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface ExerciseDescription extends Document {
     templateId: String,
     exerciseId: string,
-    setIndex: number,
+    createdAt: String,
     weight: number,
     reps: number
 }
@@ -12,7 +12,7 @@ const exerciseDescriptionSchema: Schema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     exerciseId: String,
     templateId: String,
-    setIndex: Number,
+    createdAt: String,
     weight: Number,
     reps: Number
 });

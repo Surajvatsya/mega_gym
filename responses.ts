@@ -172,7 +172,7 @@ export interface ExerciseTemplate {
 }
 
 export interface ExerciseSetAndReps {
-    setNo: number,
+    exerciseDescriptionId: String,
     weight: number,
     reps: number,
     doneToday: boolean

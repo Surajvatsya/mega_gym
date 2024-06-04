@@ -1,4 +1,4 @@
-import { JWToken, RegisterCustomerRequest, updateSubscriptionRequest, workoutAnalysisRequest } from "../../requests";
+import { AddSetRequest, JWToken, RegisterCustomerRequest, UpdateSetRequest, updateSubscriptionRequest, workoutAnalysisRequest } from "../../requests";
 import { GetCustomerProfileResponse, GetCustomersResponse, CustomerDetails, MemberLoginResponse, WorkoutAnalysisResponse, IdCardResponse, ExerciseSetAndReps, GetTemplateResponse, ExerciseTemplate } from "../../responses";
 const mongoose = require("mongoose");
 import Customer from '../model/customer'
@@ -545,6 +545,74 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
   }
 });
 
+router.put('/updateSet', verifyToken, async (req: any, res: any) => {
+
+  const requestBody: UpdateSetRequest = req.body
+
+  await ExerciseDescription.findByIdAndUpdate(
+    req.body.exerciseDescriptionId,
+    {
+      weight: requestBody.weight,
+      reps: requestBody.reps
+    },
+    {
+      new: true,
+    },
+  );
+
+  res.status(404).json({ message: "Set is updated" });
+
+})
+
+
+// needs to be fixed
+
+router.delete('/removeSet', verifyToken, async (req: any, res: any) => {
+
+  const ia = await ExerciseDescription.deleteOne({"_id": {"$oid": req.body.exerciseDescriptionId}});
+  console.log(ia);
+  res.status(200).json({ message: 'Deleted Successfully' })
+
+})
+
+router.post('/addSet', verifyToken, async (req: any, res: any) => {
+  const jwToken: JWToken = req.jwt;
+  const requestBody: AddSetRequest = req.body;
+  const customer = await Customer.findById(jwToken.ownerId);
+
+  if (customer) {
+
+    const day = new Date().getDay();
+    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day });
+
+    if (customerTemplate) {
+
+      const exerciseDescription = new ExerciseDescription({
+        _id: new mongoose.Types.ObjectId(),
+        templateId: customerTemplate.id.toString(),
+        exerciseId: requestBody.exerciseId,
+        createdAt: Date.now(),
+        weight: requestBody.weight,
+        reps: requestBody.reps
+      })
+
+      await exerciseDescription.save();
+
+      res.status(200).json({ message: "Set is saved" });
+
+    }
+    else {
+      res.status(404).json({ message: "Customer template not found" });
+
+    }
+
+  }
+  else {
+    res.status(404).json({ message: "Customer not found" });
+  }
+
+})
+
 router.post('/addExercise', verifyToken, async (req: any, res: any) => {
 
   const jwToken: JWToken = req.jwt;
@@ -563,9 +631,9 @@ router.post('/addExercise', verifyToken, async (req: any, res: any) => {
         _id: new mongoose.Types.ObjectId(),
         templateId: customerTemplate.id.toString(),
         exerciseId: exerciseId,
-        setIndex: -1,
-        weight: 0,
-        reps: 0
+        createdAt: Date.now(),
+        weight: -1,
+        reps: -1
       })
 
       await exerciseDescription.save();
@@ -573,7 +641,31 @@ router.post('/addExercise', verifyToken, async (req: any, res: any) => {
 
     }
     else {
-      res.status(404).json({ message: "Customer template not found" });
+
+      const customerTemplateId = new mongoose.Types.ObjectId();
+
+      const customerTemplate = new Template({
+        _id: customerTemplateId,
+        day: new Date().getDay(),
+        customerId: jwToken.ownerId
+      })
+
+      const exerciseDescription = new ExerciseDescription({
+        _id: new mongoose.Types.ObjectId(),
+        templateId: customerTemplateId,
+        exerciseId: exerciseId,
+        setIndex: Date.now(),
+        weight: -1,
+        reps: -1
+      })
+
+      await exerciseDescription.save();
+      await customerTemplate.save();
+
+
+
+
+      res.status(200).json({ message: "Exercise is saved" });
 
     }
 
@@ -598,7 +690,7 @@ router.get('/template', verifyToken, async (req: any, res: Response<ExerciseTemp
         { $match: { templateId: customerTemplate.id } },
         { $group: { _id: "$exerciseId", exercises: { $push: "$$ROOT" } } },
         { $unwind: "$exercises" },
-        { $sort: { "exercises.setIndex": 1 } },
+        { $sort: { "exercises.createdAt": 1 } },
         { $group: { _id: "$_id", exercises: { $push: "$exercises" } } }
       ]);
 
@@ -608,18 +700,19 @@ router.get('/template', verifyToken, async (req: any, res: Response<ExerciseTemp
 
         const information = exerciseIdAndExercise.exercises.map((exerciseInformation: any) => {
           return {
-            setNo: exerciseInformation.setIndex,
+            exerciseDescriptionId: exerciseInformation._id.toString(),
             weight: exerciseInformation.weight,
             reps: exerciseInformation.reps,
             doneToday: false,
           } as ExerciseSetAndReps;
         });
 
+        const filteredInformation = information.filter((info: ExerciseSetAndReps) => info.reps != -1 && info.weight != -1)
 
         return {
           exerciseId: exerciseIdAndExercise._id,
           exerciseName: exercise ? exercise.name : '' as String,
-          exerciseInformation: information
+          exerciseInformation: filteredInformation
         } as ExerciseTemplate;
 
       }));
