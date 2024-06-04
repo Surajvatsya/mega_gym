@@ -48,6 +48,7 @@ app.use("/whatsapp", messageRoute);
 app.use("/notification", notificationRoute);
 app.use("/aws", awsRoute);
 app.use("/template", templateRoutce)
+app.use("/template", templateRoutce)
 app.use("/attendance", attendanceRoute)
 app.use("/workoutLog", workoutLogsRoute)
 app.use("/exercise", exerciseRoute)
