@@ -12,14 +12,47 @@ const verifyToken = require("../middleware/jwt");
 import { addValidTillToCurrDate, getProfilePic, uploadBase64, deleteFromS3, calculateValidTill } from '../utils'
 import express, { Request, Response } from 'express';
 import Owner from "../model/owner";
-import { getThisWeekAttendance } from '../routes/attendance';
 import { TemplateResponse } from '../../responses';
 import WorkoutLog, { WorkoutLogs } from "../model/workoutLog";
 import Template from "../model/template";
 import ExerciseDescription from "../model/exerciseDescription";
 
+
 require("dotenv").config();
 const router = express.Router();
+
+const getThisWeekAttendance = async (customerId:  any) => {
+  console.log("called");
+  const thisMonth = new Date().getMonth() + 1;
+  const thisYear = new Date().getFullYear();
+  const noOfDaysInCurrWeek = new Date().getDay(); // Thursday -> 4 
+  const todayDate = new Date().getDate(); // 6 June
+  const startingDateOfWeek = todayDate - (noOfDaysInCurrWeek - 1); // 6 - 3 = 3 -> Monday
+  const lastDayOfWeek = startingDateOfWeek + 6; // (9 june)
+  // const customerId = new mongoose.Types.ObjectId(customerId_);
+
+
+  const attendance = await Attendance.find({ customerId, year: thisYear, month: thisMonth })
+  console.log("thisWeekAttendance", attendance);
+  
+  if (!attendance || attendance.length === 0 || !attendance[0].days) {
+      console.log("Attendance is null", attendance);
+      const createAttandanceRecord = new Attendance({
+        _id: new mongoose.Types.ObjectId(),
+        customerId,
+        year: thisYear,
+        month: thisMonth,
+        days: 0
+      })
+      await createAttandanceRecord.save();
+      console.log("New Attendance Record Created");
+      return "0";
+  } else {
+      const binaryString = attendance[0].days.toString(2).split('').reverse().join('');
+      return binaryString.slice(startingDateOfWeek - 1, lastDayOfWeek + 1);
+  }
+}
+
 
 // future usecase
 router.post("/signup", (req: any, res: any) => {
@@ -469,6 +502,8 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
 
 router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerProfileResponse>) => {
   const jwtoken: JWToken = req.jwt
+  // console.log(getThisWeekAttendance); // This should log the function definition if imported correctly
+
   if (jwtoken == undefined) {
     res.status(404).json({
       contact: null,
@@ -491,6 +526,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
     if (customer.traineeId) {
       const trainer = await Trainee.findById(customer.traineeId);
       const thisWeekAttendance = await getThisWeekAttendance(jwtoken.ownerId)
+      console.log("thisWeekAttendance", thisWeekAttendance);
+      
       // const templateRes = await getTemplateByUserId (customer.id)
       res.status(200).json({
         contact: customer.contact,
