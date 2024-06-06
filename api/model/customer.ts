@@ -12,6 +12,7 @@ interface customer extends Document {
   currentPlanId: mongoose.Schema.Types.ObjectId,
   traineeId:string
   lastUpdatedProfilePic: string,
+  referralCode : string
 }
 
 const customerSchema: Schema = new mongoose.Schema({
@@ -38,7 +39,9 @@ const customerSchema: Schema = new mongoose.Schema({
   goal: String,
   experience: String,
   currentPlanId: mongoose.Schema.Types.ObjectId,
-  traineeId:String
+  traineeId:String,
+  referralCode : String
+
 });
 
 const customer = mongoose.model<customer>('customer', customerSchema);

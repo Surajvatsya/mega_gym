@@ -234,7 +234,8 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       experience: requestBody.experience,
       traineeId: requestBody.mentorId,
       lastUpdatedProfilePic: new Date().getTime().toString(),
-      currentPlanId: newPlan.id
+      currentPlanId: newPlan._id,
+      referralCode : Math.floor(100000 + Math.random() * 900000)
     });
 
     // const current = new Date().getMonth;
@@ -296,6 +297,7 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
         currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
         gymName: customerData.gymName,
         gymId: jwToken.ownerId,
+        referralCode : Math.floor(100000 + Math.random() * 900000)
       });
 
       return { plan: newPlan, customer: customer };
@@ -392,6 +394,7 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
     });
   }
 });
+
 
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
 

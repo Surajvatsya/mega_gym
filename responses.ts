@@ -1,4 +1,5 @@
 import Exercise from "./api/model/exercise";
+import mongoose from "mongoose";
 import Owner from "./api/model/owner";
 import { JWToken } from "./requests";
 
@@ -78,7 +79,16 @@ export interface GetCustomerProfileResponse {
     currentWeekAttendance: string | null,
     template: TemplateResponse
 }
+export interface VerifyReferralCode {
+   user : string | null,
+   currPlan : mongoose.Schema.Types.ObjectId | null,
+   error: string | null
+}
 
+export interface ReferralCode {
+    referralCode : string | null,
+    error : string | null
+ }
 export interface DuplicateResponseCheck {
     unique: boolean,
 }

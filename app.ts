@@ -10,6 +10,7 @@ const templateRoutce = require("./api/routes/template");
 const attendanceRoute = require("./api/routes/attendance");
 const workoutLogsRoute = require("./api/routes/workoutLog");
 const exerciseRoute = require("./api/routes/exercise");
+const referralRoute = require("./api/routes/referral");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -48,7 +49,7 @@ app.use("/whatsapp", messageRoute);
 app.use("/notification", notificationRoute);
 app.use("/aws", awsRoute);
 app.use("/template", templateRoutce)
-app.use("/template", templateRoutce)
+app.use("/referral", referralRoute)
 app.use("/attendance", attendanceRoute)
 app.use("/workoutLog", workoutLogsRoute)
 app.use("/exercise", exerciseRoute)
