@@ -1,3 +1,4 @@
+import Exercise from "./api/model/exercise";
 import Owner from "./api/model/owner";
 import { JWToken } from "./requests";
 
@@ -177,3 +178,8 @@ export interface ExerciseSetAndReps {
     reps: number,
     doneToday: boolean
 }
+
+export interface GetAllExercises {
+    exercises : Exercise []
+}
+
