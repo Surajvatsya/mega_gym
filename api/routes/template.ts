@@ -5,7 +5,7 @@ import Exercise from '../model/exercise'
 import ExerciseDesc from '../model/exerciseDesc'
 import TemplateDesc from '../model/templateDesc'
 import { ExerciseForDayResponse } from '../../responses';
-import { AddSetToExerciseRequest, JWToken } from '../../requests';
+import { AddSetToExerciseRequest, JWToken, UpdateSetRequest } from '../../requests';
 const mongoose = require("mongoose");
 
 router.post("/addSetToExercise", verifyToken, async (req:any, res:any)=>{
@@ -206,5 +206,31 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
 });
 
 
+router.put('/updateSet', verifyToken, async (req: any, res: any) => {
+
+    const customerId = req.jwt.ownerId;
+    // Get the numeric day value (0-6)
+    const today = new Date().getDay();
+    const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, {_id : 1});
+
+    const requestBody: UpdateSetRequest = req.body
+  
+    await ExerciseDesc.findByIdAndUpdate(
+
+      {templateDescId,exerciseId : requestBody.exerciseId},
+      {
+        weight: requestBody.weight,
+        reps: requestBody.reps
+      },
+      {
+        new: true,
+      },
+    );
+  
+    res.status(404).json({ message: "Set is updated" });
+  
+  })
 
 module.exports = router;

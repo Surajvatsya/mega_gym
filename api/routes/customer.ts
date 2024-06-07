@@ -589,8 +589,9 @@ router.put('/updateSet', verifyToken, async (req: any, res: any) => {
 
   const requestBody: UpdateSetRequest = req.body
 
-  await ExerciseDescription.findByIdAndUpdate(
-    req.body.exerciseDescriptionId,
+  await ExerciseDesc.findByIdAndUpdate(
+    requestBody.exerciseDescriptionId,
+    requestBody.exerciseId,
     {
       weight: requestBody.weight,
       reps: requestBody.reps
