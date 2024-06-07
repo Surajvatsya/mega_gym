@@ -126,6 +126,18 @@ export interface TemplateResponse {
 }
 
 
+export interface ExerciseForDayResponse {
+    exercises: {
+        exerciseId: string;
+        exerciseName: string;
+        sets: {
+            setNumber: number;
+            weight: number;
+            reps: number;
+        }[] | null;
+    }[] | null;
+}
+
 export interface LifeTimeAttendance {
     sortedAttendance: {
         month: number,

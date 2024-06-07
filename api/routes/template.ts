@@ -4,6 +4,7 @@ const verifyToken = require("../middleware/jwt");
 import Exercise from '../model/exercise'
 import ExerciseDesc from '../model/exerciseDesc'
 import TemplateDesc from '../model/templateDesc'
+import { ExerciseForDayResponse } from '../../responses';
 const mongoose = require("mongoose");
 
 router.post("/addSetToExercise", verifyToken, async (req:any, res:any)=>{
@@ -12,13 +13,13 @@ router.post("/addSetToExercise", verifyToken, async (req:any, res:any)=>{
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, {_id : 1});
-        // const exerciseDesc = await ExerciseDesc.findOne({ templateDescId, exerciseId: req.body.exercise }, {_id : 1});
         const newExerciseDesc = new ExerciseDesc({
             _id: new mongoose.Types.ObjectId(),
             exerciseId: req.body.exerciseId,
-            setNumber : req.body.setNumber,
+            exerciseName: req.body.exerciseName,
+            setNumber :  new Date(),
             reps : req.body.reps,
-            wets : req.body.wets,
+            weight : req.body.weight,
             templateDescId: templateDescId,
         });
         await newExerciseDesc.save();
@@ -44,6 +45,10 @@ router.post("/addExerciseToTemplate", verifyToken, async (req:any, res:any)=>{
         const newExerciseDesc = new ExerciseDesc({
             _id: new mongoose.Types.ObjectId(),
             exerciseId: req.body.exerciseId,
+            exerciseName: req.body.exerciseName,
+            setNumber : -1,
+            reps : -1,
+            weight : -1,
             templateDescId: templateDescId,
         });
         await newExerciseDesc.save();
@@ -60,6 +65,10 @@ router.post("/addExerciseToTemplate", verifyToken, async (req:any, res:any)=>{
         const newExerciseDesc = new ExerciseDesc({
             _id: new mongoose.Types.ObjectId(),
             exerciseId: req.body.exerciseId,
+            exerciseName: req.body.exerciseName,
+            setNumber : -1,
+            reps : -1,
+            weight : -1,
             templateDescId: newTemplateDescId,
         });
         await newExerciseDesc.save();
@@ -117,7 +126,7 @@ router.delete("/removeExercise", verifyToken, async (req:any, res:any)=>{
     }
 } )
 
-router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response) => {
+router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<ExerciseForDayResponse>) => {
     try {
         const customerId = req.jwt.ownerId;
         const today = new Date().getDay();
@@ -148,7 +157,8 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response) =
                 $group: {
                     _id: {
                         day: '$day',
-                        exerciseId: '$exercises.exerciseId'
+                        exerciseId: '$exercises.exerciseId',
+                        exerciseName: '$exercises.exerciseName'
                     },
                     sets: {
                         $push: {
@@ -165,6 +175,7 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response) =
                     exercises: {
                         $push: {
                             exerciseId: '$_id.exerciseId',
+                            exerciseName: '$_id.exerciseName',
                             sets: '$sets'
                         }
                     }
@@ -176,17 +187,19 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response) =
                     day: '$_id',
                     exercises: 1
                 }
+            },
+            {
+                $sort: { 'exercises.sets.setNumber': 1 }  // Sort the exercises by timestamp
             }
         ]);
         console.log("exercises", exercises);
         if (exercises.length === 0) {
-            return res.status(404).json({ message: 'No exercises found for this day.' });
+            return res.status(404).json({ exercises: null });
         }
-
         res.status(200).json(exercises[0]);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server error.' });
+        res.status(500).json({ exercises: null });
     }
 });
 
