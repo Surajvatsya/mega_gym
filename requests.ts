@@ -51,6 +51,13 @@ export interface updateSubscriptionRequest {
     charges: number
 }
 
+export interface AddSetToExerciseRequest {
+    exerciseId: string,
+    exerciseName: string,
+    reps: number,
+    weight: number
+}
+
 export interface TemplateRequest {
     goal: String,
     experience: String,

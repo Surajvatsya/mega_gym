@@ -5,25 +5,28 @@ import Exercise from '../model/exercise'
 import ExerciseDesc from '../model/exerciseDesc'
 import TemplateDesc from '../model/templateDesc'
 import { ExerciseForDayResponse } from '../../responses';
+import { AddSetToExerciseRequest, JWToken } from '../../requests';
 const mongoose = require("mongoose");
 
 router.post("/addSetToExercise", verifyToken, async (req:any, res:any)=>{
     try {
-        const customerId = req.jwt.ownerId;
+        const reqBody : AddSetToExerciseRequest =  req.body
+        const token : JWToken = req.jwt;
+        const customerId = token.ownerId.toString();
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, {_id : 1});
         const newExerciseDesc = new ExerciseDesc({
             _id: new mongoose.Types.ObjectId(),
-            exerciseId: req.body.exerciseId,
-            exerciseName: req.body.exerciseName,
+            exerciseId: reqBody.exerciseId,
+            exerciseName: reqBody.exerciseName,
             setNumber :  new Date(),
-            reps : req.body.reps,
-            weight : req.body.weight,
+            reps : reqBody.reps,
+            weight : reqBody.weight,
             templateDescId: templateDescId,
         });
         await newExerciseDesc.save();
-        res.status(200).json({ message: " SetToExercise added " });    
+        res.status(200).json({ message: " Set has been added to exercise " });    
     } catch (error) {
         res.status(500).json({ message: error });    
     }
@@ -37,7 +40,6 @@ router.post("/addExerciseToTemplate", verifyToken, async (req:any, res:any)=>{
     // Get the numeric day value (0-6)
     const today = new Date().getDay();
     const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    // const newExerciseDescId = new mongoose.Types.ObjectId();
 
     const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, {_id : 1});
 
