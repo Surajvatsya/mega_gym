@@ -117,7 +117,7 @@ router.delete("/removeExercise", verifyToken, async (req:any, res:any)=>{
     const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, {_id : 1});
 
     if (templateDescId){
-        const result = await ExerciseDesc.deleteOne({templateDescId,exerciseId : req.body.exerciseId});
+        const result = await ExerciseDesc.deleteMany({templateDescId,exerciseId : req.body.exerciseId});
         res.status(200).json({ message: `successfully removed exercise ${req.body.exerciseId} ${result}` });
     }
     else
