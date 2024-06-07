@@ -126,7 +126,7 @@ allExerciseList = [
 
 # Insert each exercise name into the collection
 for exercise_name in allExerciseList:
-    exercise_document = {"name": exercise_name}
+    exercise_document = {"name": exercise_name['name'],'body_part': exercise_name['body']}
     collection.insert_one(exercise_document)
 
 print("Exercises inserted successfully.")
