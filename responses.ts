@@ -134,8 +134,8 @@ export interface ExerciseForDayResponse {
             setNumber: number;
             weight: number;
             reps: number;
-        }[] | null;
-    }[] | null;
+        }[];
+    }[];
 }
 
 export interface LifeTimeAttendance {
@@ -143,8 +143,7 @@ export interface LifeTimeAttendance {
         month: number,
         year: number,
         days: string
-    }[] | null
-
+    }[] 
 }
 
 export interface WorkoutLogsResponse {

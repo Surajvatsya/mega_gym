@@ -18,7 +18,7 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
         const lifeTImeAttandance = await Attendance.find({ customerId }, { _id: 0, customerId: 0, __v: 0 });
         if (!lifeTImeAttandance || lifeTImeAttandance.length === 0 || !lifeTImeAttandance[0].days) {
             console.log("LifeTImeAttandance is empty");
-            return res.status(404).json({ sortedAttendance: null });
+            return res.status(404).json({ sortedAttendance: [] });
 
         }
         const lifeTImeAttandance_ = lifeTImeAttandance.map((att) => {
@@ -39,7 +39,7 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
     }
     catch (error) {
         console.log(error);
-        res.status(500).json({ sortedAttendance: null });
+        res.status(500).json({ sortedAttendance: [] });
 
     }
 })

@@ -196,12 +196,12 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
         ]);
         console.log("exercises", exercises);
         if (exercises.length === 0) {
-            return res.status(404).json({ exercises: null });
+            return res.status(404).json({ exercises: [] });
         }
         res.status(200).json(exercises[0]);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ exercises: null });
+        res.status(500).json({ exercises: [] });
     }
 });
 

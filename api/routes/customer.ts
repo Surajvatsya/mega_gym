@@ -585,25 +585,25 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
   }
 });
 
-router.put('/updateSet', verifyToken, async (req: any, res: any) => {
+// router.put('/updateSet', verifyToken, async (req: any, res: any) => {
 
-  const requestBody: UpdateSetRequest = req.body
+//   const requestBody: UpdateSetRequest = req.body
 
-  await ExerciseDesc.findByIdAndUpdate(
-    requestBody.exerciseDescriptionId,
-    requestBody.exerciseId,
-    {
-      weight: requestBody.weight,
-      reps: requestBody.reps
-    },
-    {
-      new: true,
-    },
-  );
+//   await ExerciseDesc.findByIdAndUpdate(
+//     requestBody.exerciseDescriptionId,
+//     requestBody.exerciseId,
+//     {
+//       weight: requestBody.weight,
+//       reps: requestBody.reps
+//     },
+//     {
+//       new: true,
+//     },
+//   );
 
-  res.status(404).json({ message: "Set is updated" });
+//   res.status(404).json({ message: "Set is updated" });
 
-})
+// })
 
 
 // needs to be fixed
