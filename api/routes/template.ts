@@ -161,12 +161,12 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
                         day: '$day',
                         exerciseId: '$exercises.exerciseId',
                         exerciseName: '$exercises.exerciseName',
-                        exerciseDescreptionId: '$exercises._id'
+                        exerciseDescriptionId: '$exercises._id'
                     },
                     sets: {
                         $push: {
                             setNumber: '$exercises.setNumber',
-                            exerciseDescreptionId: '$exercises._id',
+                            exerciseDescriptionId: '$exercises._id',
                             weight: '$exercises.weight',
                             reps: '$exercises.reps'
                         }
