@@ -136,7 +136,7 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
 
         const day = daysOfWeek[today];
         console.log("day ", day);
-        
+
         const exercises = await TemplateDesc.aggregate([
             {
                 $match: {
@@ -160,15 +160,36 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
                     _id: {
                         day: '$day',
                         exerciseId: '$exercises.exerciseId',
-                        exerciseName: '$exercises.exerciseName',
-                        exerciseDescriptionId: '$exercises._id'
+                        exerciseName: '$exercises.exerciseName'
                     },
                     sets: {
                         $push: {
-                            setNumber: '$exercises.setNumber',
-                            exerciseDescriptionId: '$exercises._id',
-                            weight: '$exercises.weight',
-                            reps: '$exercises.reps'
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $ne: ['$exercises.weight', -1] },
+                                        { $ne: ['$exercises.reps', -1] }
+                                    ]
+                                },
+                                {
+                                    setNumber: '$exercises.setNumber',
+                                    exerciseDescriptionId: '$exercises._id',
+                                    weight: '$exercises.weight',
+                                    reps: '$exercises.reps'
+                                },
+                                null
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                $addFields: {
+                    sets: {
+                        $filter: {
+                            input: '$sets',
+                            as: 'set',
+                            cond: { $ne: ['$$set', null] }
                         }
                     }
                 }
@@ -193,9 +214,10 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
                 }
             },
             {
-                $sort: { 'exercises.sets.setNumber': 1 }  // Sort the exercises by timestamp
+                $sort: { 'exercises.sets.setNumber': 1 }  // Sort the exercises by setNumber
             }
         ]);
+
         console.log("exercises", exercises);
         if (exercises.length === 0) {
             return res.status(200).json({ exercises: [] });
