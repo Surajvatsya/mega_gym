@@ -22,7 +22,6 @@ require("dotenv").config();
 const router = express.Router();
 
 const getThisWeekAttendance = async (customerId:  any) => {
-  console.log("called");
   const thisMonth = new Date().getMonth() + 1;
   const thisYear = new Date().getFullYear();
   const noOfDaysInCurrWeek = new Date().getDay(); // Thursday -> 4 
@@ -224,6 +223,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       name: requestBody.name,
       contact: requestBody.contact,
       currentBeginDate: requestBody.currentBeginDate,
+      registeredAt: requestBody.currentBeginDate,
       currentFinishDate: addValidTillToCurrDate(
         requestBody.currentBeginDate,
         requestBody.validTill,
@@ -294,6 +294,7 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
         gender: customerData.gender,
         bloodGroup: customerData.bloodGroup,
         currentBeginDate: customerData.currentBeginDate,
+        registeredAt: customerData.currentBeginDate,
         currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
         gymName: customerData.gymName,
         gymId: jwToken.ownerId,

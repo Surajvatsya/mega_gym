@@ -80,15 +80,15 @@ export interface GetCustomerProfileResponse {
     template: TemplateResponse
 }
 export interface VerifyReferralCode {
-   user : string | null,
-   currPlan : mongoose.Schema.Types.ObjectId | null,
-   error: string | null
+    user: string | null,
+    currPlan: mongoose.Schema.Types.ObjectId | null,
+    error: string | null
 }
 
 export interface ReferralCode {
-    referralCode : string | null,
-    error : string | null
- }
+    referralCode: string | null,
+    error: string | null
+}
 export interface DuplicateResponseCheck {
     unique: boolean,
 }
@@ -139,11 +139,17 @@ export interface ExerciseForDayResponse {
 }
 
 export interface LifeTimeAttendance {
-    sortedAttendance: {
+    startMonth: string | null,
+    startYear: number | null,
+    startDay: number | null
+    endMonth: string | null,
+    endYear: number | null,
+    data: {
         month: number,
         year: number,
-        days: string
-    }[] 
+        days: number []
+    }[]
+
 }
 
 export interface WorkoutLogsResponse {
@@ -184,13 +190,13 @@ export interface IdCardResponse {
 }
 
 export interface GetTemplateResponse {
-    exerciseTemplate: ExerciseTemplate []
+    exerciseTemplate: ExerciseTemplate[]
 }
 
 export interface ExerciseTemplate {
     exerciseName: String,
     exerciseId: String,
-    exerciseInformation: ExerciseSetAndReps []
+    exerciseInformation: ExerciseSetAndReps[]
 }
 
 export interface ExerciseSetAndReps {
@@ -201,6 +207,6 @@ export interface ExerciseSetAndReps {
 }
 
 export interface GetAllExercises {
-    exercises : Exercise []
+    exercises: Exercise[]
 }
 
