@@ -17,6 +17,7 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
     try {
         const customerId = req.jwt.ownerId;
         const lifeTImeAttandance = await Attendance.find({ customerId }, { _id: 0, customerId: 0, __v: 0 });
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         if (!lifeTImeAttandance || lifeTImeAttandance.length === 0 || !lifeTImeAttandance[0].days) {
             console.log("LifeTImeAttandance is empty");
             const resp = {
@@ -27,12 +28,12 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
                 endYear: null,
                 data: []
             }
-            return res.status(404).json(resp);
+            return res.status(200).json(resp);
         }
         const lifeTImeAttandance_ = lifeTImeAttandance.map((att) => {
             const attendanceInNumber = att.days.toString(2).split('').map(Number).reverse();
             return {
-                month: att.month,
+                month: months[att.month-1],
                 year: att.year,
                 days: attendanceInNumber
             }
@@ -42,14 +43,13 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
         const startYearAndMonth = sortedAttendance[0];
         const lastYearAndMonth = sortedAttendance[sortedAttendance.length - 1];
         const startDay = await Customer.findById(customerId, { _id: 0, registeredAt: 1 });
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         if (startDay) {
             const startDate = startDay.registeredAt.split(" ");
             const resp: LifeTimeAttendance = {
-                startMonth: months[startYearAndMonth.month - 1],
+                startMonth: startYearAndMonth.month,
                 startYear: startYearAndMonth.year,
                 startDay: Number(startDate[0]),
-                endMonth: months[lastYearAndMonth.month - 1],
+                endMonth: lastYearAndMonth.month,
                 endYear: lastYearAndMonth.year,
                 data: sortedAttendance
             }
@@ -57,10 +57,10 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
         }
         else {
             const resp: LifeTimeAttendance = {
-                startMonth: months[startYearAndMonth.month - 1],
+                startMonth: startYearAndMonth.month,
                 startYear: startYearAndMonth.year,
                 startDay: null,
-                endMonth: months[lastYearAndMonth.month - 1],
+                endMonth: lastYearAndMonth.month,
                 endYear: lastYearAndMonth.year,
                 data: sortedAttendance
             }

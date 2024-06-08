@@ -478,7 +478,6 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
 
     const attendanceDays = await Attendance.findOne({ customerId, month: currMonth, year: currYear }, { days: 1, _id: 0 });
     console.log(" customerId, currMonth, currYear ", attendanceDays);
-    // const todayDate = new Date().getDate;
 
     if (!attendanceDays) {
       return res.status(404).json({ message: 'Attendance not found' });

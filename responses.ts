@@ -145,7 +145,7 @@ export interface LifeTimeAttendance {
     endMonth: string | null,
     endYear: number | null,
     data: {
-        month: number,
+        month: string,
         year: number,
         days: number []
     }[]
