@@ -114,7 +114,6 @@ export interface AddSetRequest {
 }
 
 export interface UpdateSetRequest {
-    exerciseId: String,
     exerciseDescriptionId: String,
     reps: number,
     weight: number

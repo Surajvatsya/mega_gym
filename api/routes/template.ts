@@ -198,7 +198,7 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
         ]);
         console.log("exercises", exercises);
         if (exercises.length === 0) {
-            return res.status(404).json({ exercises: [] });
+            return res.status(200).json({ exercises: [] });
         }
         res.status(200).json(exercises[0]);
     } catch (error) {
@@ -210,18 +210,11 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
 
 router.put('/updateSet', verifyToken, async (req: any, res: any) => {
 
-    const customerId = req.jwt.ownerId;
-    // Get the numeric day value (0-6)
-    const today = new Date().getDay();
-    const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-    const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, {_id : 1});
-
     const requestBody: UpdateSetRequest = req.body
   
     await ExerciseDesc.findByIdAndUpdate(
 
-      {templateDescId,exerciseId : requestBody.exerciseId},
+       new mongoose.Types.ObjectId(requestBody.exerciseDescriptionId),
       {
         weight: requestBody.weight,
         reps: requestBody.reps
