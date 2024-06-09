@@ -889,7 +889,8 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     const maxCount = Math.max(...bucketCounts.map(bucket => bucket.count)) ?? 0
 
-    const percentile = Math.round((usersWeightLessThanEqCount / allUsersCount) * 100);
+    // handled the case when user is the only person to perform the exercise
+    const percentile = Math.round((usersWeightLessThanEqCount != 0 ? usersWeightLessThanEqCount : allUsersCount / allUsersCount) * 100);
 
     res.status(200).json({
       comparisionData: {
