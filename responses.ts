@@ -213,7 +213,10 @@ export interface GetAllExercises {
 }
 
 export interface UserExercises {
-    exercises: string[]
+    exercises: ExerciseIdAndName[]
 }
 
-
+export interface ExerciseIdAndName{
+    _id : string,
+    name: string
+}
