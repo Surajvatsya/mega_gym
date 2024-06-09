@@ -22,7 +22,6 @@ require("dotenv").config();
 const router = express.Router();
 
 const getThisWeekAttendance = async (customerId:  any) => {
-  console.log("called");
   const thisMonth = new Date().getMonth() + 1;
   const thisYear = new Date().getFullYear();
   const noOfDaysInCurrWeek = new Date().getDay(); // Thursday -> 4 
@@ -224,6 +223,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       name: requestBody.name,
       contact: requestBody.contact,
       currentBeginDate: requestBody.currentBeginDate,
+      registeredAt: requestBody.currentBeginDate,
       currentFinishDate: addValidTillToCurrDate(
         requestBody.currentBeginDate,
         requestBody.validTill,
@@ -294,6 +294,7 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
         gender: customerData.gender,
         bloodGroup: customerData.bloodGroup,
         currentBeginDate: customerData.currentBeginDate,
+        registeredAt: customerData.currentBeginDate,
         currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
         gymName: customerData.gymName,
         gymId: jwToken.ownerId,
@@ -352,6 +353,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         validTill: null,
         experience: null,
         currentWeekAttendance: null,
+        locationLat:  null,
+        locationLon:  null,
         error: "Customer not found",
         template: { templateDesc: null }
       });
@@ -373,6 +376,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       goal: customer.goal,
       experience: customer.experience,
       currentWeekAttendance: null,
+      locationLat:  null,
+      locationLon:  null,
       error: null,
       template: { templateDesc: null }
     });
@@ -389,6 +394,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       goal: null,
       experience: null,
       currentWeekAttendance: null,
+      locationLat:  null,
+      locationLon:  null,
       currentFinishDate: null, error: "'Internal Server Error'",
       template: { templateDesc: null }
     });
@@ -477,7 +484,6 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
 
     const attendanceDays = await Attendance.findOne({ customerId, month: currMonth, year: currYear }, { days: 1, _id: 0 });
     console.log(" customerId, currMonth, currYear ", attendanceDays);
-    // const todayDate = new Date().getDate;
 
     if (!attendanceDays) {
       return res.status(404).json({ message: 'Attendance not found' });
@@ -505,8 +511,6 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
 
 router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerProfileResponse>) => {
   const jwtoken: JWToken = req.jwt
-  // console.log(getThisWeekAttendance); // This should log the function definition if imported correctly
-
   if (jwtoken == undefined) {
     res.status(404).json({
       contact: null,
@@ -521,6 +525,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       experience: null,
       currentBeginDate: null,
       currentWeekAttendance: null,
+      locationLat:  null,
+      locationLon:  null,
       template: { templateDesc: null }
     })
   }
@@ -528,10 +534,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
   if (customer) {
     if (customer.traineeId) {
       const trainer = await Trainee.findById(customer.traineeId);
+      const gymLocation = await Owner.findById(customer.gymId, {_id : 0, gymLocationLat: 1,gymLocationLon: 1});
       const thisWeekAttendance = await getThisWeekAttendance(jwtoken.ownerId)
-      console.log("thisWeekAttendance", thisWeekAttendance);
-      
-      // const templateRes = await getTemplateByUserId (customer.id)
       res.status(200).json({
         contact: customer.contact,
         error: null,
@@ -545,6 +549,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
         currentWeekAttendance: thisWeekAttendance ? thisWeekAttendance : null,
+        locationLat: gymLocation? gymLocation.gymLocationLat: null,
+        locationLon:  gymLocation? gymLocation.gymLocationLon: null,
         template: { templateDesc: null }
       });
     }
@@ -562,6 +568,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         experience: null,
         currentBeginDate: customer.currentBeginDate,
         currentWeekAttendance: null,
+        locationLat:  null,
+        locationLon:  null,
         template: { templateDesc: null }
       });
     }
@@ -580,33 +588,14 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       experience: null,
       currentBeginDate: null,
       currentWeekAttendance: null,
+      locationLat:  null,
+      locationLon:  null,
       template: { templateDesc: null }
     });
   }
 });
 
-// router.put('/updateSet', verifyToken, async (req: any, res: any) => {
 
-//   const requestBody: UpdateSetRequest = req.body
-
-//   await ExerciseDesc.findByIdAndUpdate(
-//     requestBody.exerciseDescriptionId,
-//     requestBody.exerciseId,
-//     {
-//       weight: requestBody.weight,
-//       reps: requestBody.reps
-//     },
-//     {
-//       new: true,
-//     },
-//   );
-
-//   res.status(404).json({ message: "Set is updated" });
-
-// })
-
-
-// needs to be fixed
 
 router.delete('/removeSet', verifyToken, async (req: any, res: any) => {
 
