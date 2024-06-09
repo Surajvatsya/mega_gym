@@ -44,17 +44,23 @@ router.post("/addExerciseToTemplate", verifyToken, async (req: any, res: any) =>
         const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
 
         if (templateDescId) {
-            const newExerciseDesc = new ExerciseDesc({
-                _id: new mongoose.Types.ObjectId(),
-                exerciseId: req.body.exerciseId,
-                exerciseName: req.body.exerciseName,
-                setNumber: -1,
-                reps: -1,
-                weight: -1,
-                templateDescId: templateDescId,
-            });
-            await newExerciseDesc.save();
-            res.status(200).json({ message: `Exercise added to existing template for today with id ${newExerciseDesc._id}.` });
+            const isExercisePresent = await ExerciseDesc.findOne({ exerciseId: req.body.exerciseId, templateDescId: templateDescId });
+            if (isExercisePresent) {
+                res.status(200).json({ message: `Already ${req.body.exerciseName} is present for  ${daysOfWeek[today]} with id ${isExercisePresent._id}.` });
+            }
+            else {
+                const newExerciseDesc = new ExerciseDesc({
+                    _id: new mongoose.Types.ObjectId(),
+                    exerciseId: req.body.exerciseId,
+                    exerciseName: req.body.exerciseName,
+                    setNumber: -1,
+                    reps: -1,
+                    weight: -1,
+                    templateDescId: templateDescId,
+                });
+                await newExerciseDesc.save();
+                res.status(200).json({ message: `Exercise added to existing template for today with id ${newExerciseDesc._id}.` });
+            }
         } else {
             const newTemplateDescId = new mongoose.Types.ObjectId();
             const newTemplateDesc = new TemplateDesc({
