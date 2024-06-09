@@ -210,3 +210,8 @@ export interface GetAllExercises {
     exercises: Exercise[]
 }
 
+export interface UserExercises {
+    exercises: string[]
+}
+
+
