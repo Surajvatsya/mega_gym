@@ -28,11 +28,9 @@ const getThisWeekAttendance = async (customerId:  any) => {
   const todayDate = new Date().getDate(); // 6 June
   const startingDateOfWeek = todayDate - (noOfDaysInCurrWeek - 1); // 6 - 3 = 3 -> Monday
   const lastDayOfWeek = startingDateOfWeek + 6; // (9 june)
-  // const customerId = new mongoose.Types.ObjectId(customerId_);
 
 
   const attendance = await Attendance.find({ customerId, year: thisYear, month: thisMonth })
-  console.log("thisWeekAttendance", attendance);
   
   if (!attendance || attendance.length === 0 || !attendance[0].days) {
       console.log("Attendance is null", attendance);
@@ -44,12 +42,15 @@ const getThisWeekAttendance = async (customerId:  any) => {
         days: 0
       })
       await createAttandanceRecord.save();
-      console.log("New Attendance Record Created");
       return "0";
   } else {
       const binaryString = attendance[0].days.toString(2).split('').reverse().join('');
-      return binaryString.slice(startingDateOfWeek - 1, lastDayOfWeek + 1);
-  }
+      console.log("binaryString", binaryString);
+      const bc = binaryString.slice(startingDateOfWeek - 1, lastDayOfWeek + 1);
+      console.log("bc", bc);
+      return bc;
+      
+    }
 }
 
 
@@ -549,8 +550,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
         currentWeekAttendance: thisWeekAttendance ? thisWeekAttendance : null,
-        locationLat: gymLocation? gymLocation.gymLocationLat: null,
-        locationLon:  gymLocation? gymLocation.gymLocationLon: null,
+        locationLat: gymLocation? parseFloat(gymLocation.gymLocationLat): null,
+        locationLon:  gymLocation? parseFloat(gymLocation.gymLocationLon): null,
         template: { templateDesc: null }
       });
     }
