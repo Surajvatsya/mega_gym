@@ -77,6 +77,8 @@ export interface GetCustomerProfileResponse {
     goal: string | null,
     experience: string | null,
     currentWeekAttendance: string | null,
+    locationLat: string | null,
+    locationLon: string | null,
     template: TemplateResponse
 }
 export interface VerifyReferralCode {
