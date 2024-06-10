@@ -4,12 +4,13 @@ import Customer from "../model/customer";
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const verifyToken = require("../middleware/jwt");
-import { AnalysisResponse, DuplicateResponseCheck, ExpandedAnalysisResponse, GetUPIIdResponse, LoginResponse, OwnerDetails, SignUpResponse } from '../../responses';
+import { AnalysisResponse, DuplicateResponseCheck, ExpandedAnalysisResponse, GetUPIIdResponse, LifeTimeAttendance, LoginResponse, OwnerDetails, SignUpResponse } from '../../responses';
 import { getMonthFromNumber } from "../utils";
 import { SignUpRequest, LoginRequest, JWToken, UpdateLocationRequest } from '../../requests';
 import Owner from '../model/owner';
 import Plan from '../model/plan'
 import Trainee from '../model/trainee';
+import Attendance from '../model/attendance';
 
 require("dotenv").config();
 const router = express.Router();
