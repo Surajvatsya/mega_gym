@@ -618,8 +618,10 @@ router.post('/addSet', verifyToken, async (req: any, res: any) => {
 
     if (customerTemplate) {
 
+      const exerciseDescriptionId = new mongoose.Types.ObjectId()
+
       const exerciseDescription = new ExerciseDescription({
-        _id: new mongoose.Types.ObjectId(),
+        _id: exerciseDescriptionId,
         templateId: customerTemplate.id.toString(),
         exerciseId: requestBody.exerciseId,
         createdAt: Date.now(),
@@ -629,17 +631,17 @@ router.post('/addSet', verifyToken, async (req: any, res: any) => {
 
       await exerciseDescription.save();
 
-      res.status(200).json({ message: "Set is saved" });
+      res.status(200).json({ exerciseDescriptionId: exerciseDescriptionId.toString() });
 
     }
     else {
-      res.status(404).json({ message: "Customer template not found" });
+      res.status(404).json({ exerciseDescriptionId: "template not found" });
 
     }
 
   }
   else {
-    res.status(404).json({ message: "Customer not found" });
+    res.status(404).json({ exerciseDescriptionId: "customer not found" });
   }
 
 })

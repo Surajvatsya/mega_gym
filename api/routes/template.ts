@@ -26,7 +26,7 @@ router.post("/addSetToExercise", verifyToken, async (req: any, res: any) => {
             templateDescId: templateDescId,
         });
         await newExerciseDesc.save();
-        res.status(200).json({ message: " Set has been added to exercise " });
+        res.status(200).json({ message: newExerciseDesc._id });
     } catch (error) {
         res.status(500).json({ message: error });
     }
