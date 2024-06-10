@@ -2,8 +2,8 @@ import express, { Request, Response } from 'express';
 const router = express.Router();
 const verifyToken = require("../middleware/jwt");
 import Exercise from '../model/exercise'
-import ExerciseDesc from '../model/exerciseDesc'
-import TemplateDesc from '../model/templateDesc'
+import ExerciseDescription from '../model/exerciseDescription'
+import Template from '../model/template'
 import { ExerciseForDayResponse } from '../../responses';
 import { AddSetToExerciseRequest, JWToken, UpdateSetRequest } from '../../requests';
 const mongoose = require("mongoose");
@@ -15,18 +15,18 @@ router.post("/addSetToExercise", verifyToken, async (req: any, res: any) => {
         const customerId = token.ownerId.toString();
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
-        const newExerciseDesc = new ExerciseDesc({
+        const template = await Template.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
+        const newExerciseDescription = new ExerciseDescription({
             _id: new mongoose.Types.ObjectId(),
             exerciseId: reqBody.exerciseId,
             exerciseName: reqBody.exerciseName,
             setNumber: new Date(),
             reps: reqBody.reps,
             weight: reqBody.weight,
-            templateDescId: templateDescId,
+            templateId: template?._id,
         });
-        await newExerciseDesc.save();
-        res.status(200).json({ message: newExerciseDesc._id });
+        await newExerciseDescription.save();
+        res.status(200).json({ message: newExerciseDescription._id });
     } catch (error) {
         res.status(500).json({ message: error });
     }
@@ -41,43 +41,43 @@ router.post("/addExerciseToTemplate", verifyToken, async (req: any, res: any) =>
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
+        const template = await Template.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
 
-        if (templateDescId) {
-            const isExercisePresent = await ExerciseDesc.findOne({ exerciseId: req.body.exerciseId, templateDescId: templateDescId });
+        if (template) {
+            const isExercisePresent = await ExerciseDescription.findOne({ exerciseId: req.body.exerciseId, templateId: template._id });
             if (isExercisePresent) {
                 res.status(200).json({ message: `Already ${req.body.exerciseName} is present for  ${daysOfWeek[today]} with id ${isExercisePresent._id}.` });
             }
             else {
-                const newExerciseDesc = new ExerciseDesc({
+                const newExerciseDescription = new ExerciseDescription({
                     _id: new mongoose.Types.ObjectId(),
                     exerciseId: req.body.exerciseId,
                     exerciseName: req.body.exerciseName,
                     setNumber: -1,
                     reps: -1,
                     weight: -1,
-                    templateDescId: templateDescId,
+                    templateId: template._id,
                 });
-                await newExerciseDesc.save();
-                res.status(200).json({ message: `Exercise added to existing template for today with id ${newExerciseDesc._id}.` });
+                await newExerciseDescription.save();
+                res.status(200).json({ message: `Exercise added to existing template for today with id ${newExerciseDescription._id}.` });
             }
         } else {
-            const newTemplateDescId = new mongoose.Types.ObjectId();
-            const newTemplateDesc = new TemplateDesc({
-                _id: newTemplateDescId,
+            const newTemplateId = new mongoose.Types.ObjectId();
+            const newTemplate = new Template({
+                _id: newTemplateId,
                 day: daysOfWeek[today],
                 customerId,
             });
-            await newTemplateDesc.save();
+            await newTemplate.save();
 
-            const newExerciseDesc = new ExerciseDesc({
+            const newExerciseDesc = new ExerciseDescription({
                 _id: new mongoose.Types.ObjectId(),
                 exerciseId: req.body.exerciseId,
                 exerciseName: req.body.exerciseName,
                 setNumber: -1,
                 reps: -1,
                 weight: -1,
-                templateDescId: newTemplateDescId,
+                templateId: newTemplateId,
             });
             await newExerciseDesc.save();
             res.status(200).json({ message: `Exercise added to new template for today with id ${newExerciseDesc._id}.` });
@@ -98,14 +98,14 @@ router.delete("/removeSetFromExercise", verifyToken, async (req: any, res: any) 
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
+        const templateId = await Template.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
 
-        if (templateDescId) {
-            const result = await ExerciseDesc.deleteOne({ _id: req.body.exerciseDescriptionId });
+        if (templateId) {
+            const result = await ExerciseDescription.deleteOne({ _id: req.body.exerciseDescriptionId });
             res.status(200).json({ message: `successfully removed set of exercise ${req.body.exerciseDescriptionId} ${result}` });
         }
         else
-            console.log("templateDescId is null", templateDescId);
+            console.log("templateId is null", templateId);
 
     } catch (error) {
         console.log(error);
@@ -120,14 +120,14 @@ router.delete("/removeExercise", verifyToken, async (req: any, res: any) => {
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const templateDescId = await TemplateDesc.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
+        const templateId = await Template.findOne({ customerId, day: daysOfWeek[today] }, { _id: 1 });
 
-        if (templateDescId) {
-            const result = await ExerciseDesc.deleteMany({ templateDescId, exerciseId: req.body.exerciseId });
+        if (templateId) {
+            const result = await ExerciseDescription.deleteMany({ templateId, exerciseId: req.body.exerciseId });
             res.status(200).json({ message: `successfully removed exercise ${req.body.exerciseId} ${result}` });
         }
         else
-            console.log("templateDescId is null", templateDescId);
+            console.log("templateId is null", templateId);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: `server error ${error}.` });
@@ -143,7 +143,7 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
         const day = daysOfWeek[today];
         console.log("day ", day);
 
-        const exercises = await TemplateDesc.aggregate([
+        const exercises = await Template.aggregate([
             {
                 $match: {
                     customerId,
@@ -152,9 +152,9 @@ router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<Ex
             },
             {
                 $lookup: {
-                    from: 'exercisedescs',
+                from: 'exercisedescriptions',
                     localField: '_id',
-                    foreignField: 'templateDescId',
+                    foreignField: 'templateId',
                     as: 'exercises'
                 }
             },
@@ -240,7 +240,7 @@ router.put('/updateSet', verifyToken, async (req: any, res: any) => {
 
     const requestBody: UpdateSetRequest = req.body
 
-    await ExerciseDesc.findByIdAndUpdate(
+    await ExerciseDescription.findByIdAndUpdate(
 
         new mongoose.Types.ObjectId(requestBody.exerciseDescriptionId),
         {

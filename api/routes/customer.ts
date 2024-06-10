@@ -21,7 +21,7 @@ import ExerciseDescription from "../model/exerciseDescription";
 require("dotenv").config();
 const router = express.Router();
 
-const getThisWeekAttendance = async (customerId:  any) => {
+const getThisWeekAttendance = async (customerId: any) => {
   const thisMonth = new Date().getMonth() + 1;
   const thisYear = new Date().getFullYear();
   const noOfDaysInCurrWeek = new Date().getDay(); // Thursday -> 4 
@@ -31,26 +31,26 @@ const getThisWeekAttendance = async (customerId:  any) => {
 
 
   const attendance = await Attendance.find({ customerId, year: thisYear, month: thisMonth })
-  
+
   if (!attendance || attendance.length === 0 || !attendance[0].days) {
-      console.log("Attendance is null", attendance);
-      const createAttandanceRecord = new Attendance({
-        _id: new mongoose.Types.ObjectId(),
-        customerId,
-        year: thisYear,
-        month: thisMonth,
-        days: 0
-      })
-      await createAttandanceRecord.save();
-      return "0";
+    console.log("Attendance is null", attendance);
+    const createAttandanceRecord = new Attendance({
+      _id: new mongoose.Types.ObjectId(),
+      customerId,
+      year: thisYear,
+      month: thisMonth,
+      days: 0
+    })
+    await createAttandanceRecord.save();
+    return "0";
   } else {
-      const binaryString = attendance[0].days.toString(2).split('').reverse().join('');
-      console.log("binaryString", binaryString);
-      const bc = binaryString.slice(startingDateOfWeek - 1, lastDayOfWeek + 1);
-      console.log("bc", bc);
-      return bc;
-      
-    }
+    const binaryString = attendance[0].days.toString(2).split('').reverse().join('');
+    console.log("binaryString", binaryString);
+    const bc = binaryString.slice(startingDateOfWeek - 1, lastDayOfWeek + 1);
+    console.log("bc", bc);
+    return bc;
+
+  }
 }
 
 
@@ -236,7 +236,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       traineeId: requestBody.mentorId,
       lastUpdatedProfilePic: new Date().getTime().toString(),
       currentPlanId: newPlan._id,
-      referralCode : Math.floor(100000 + Math.random() * 900000)
+      referralCode: Math.floor(100000 + Math.random() * 900000)
     });
 
     // const current = new Date().getMonth;
@@ -299,7 +299,7 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
         currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
         gymName: customerData.gymName,
         gymId: jwToken.ownerId,
-        referralCode : Math.floor(100000 + Math.random() * 900000)
+        referralCode: Math.floor(100000 + Math.random() * 900000)
       });
 
       return { plan: newPlan, customer: customer };
@@ -354,8 +354,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
         validTill: null,
         experience: null,
         currentWeekAttendance: null,
-        locationLat:  null,
-        locationLon:  null,
+        locationLat: null,
+        locationLon: null,
         error: "Customer not found",
         template: { templateDesc: null }
       });
@@ -377,8 +377,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       goal: customer.goal,
       experience: customer.experience,
       currentWeekAttendance: null,
-      locationLat:  null,
-      locationLon:  null,
+      locationLat: null,
+      locationLon: null,
       error: null,
       template: { templateDesc: null }
     });
@@ -395,8 +395,8 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
       goal: null,
       experience: null,
       currentWeekAttendance: null,
-      locationLat:  null,
-      locationLon:  null,
+      locationLat: null,
+      locationLon: null,
       currentFinishDate: null, error: "'Internal Server Error'",
       template: { templateDesc: null }
     });
@@ -526,8 +526,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       experience: null,
       currentBeginDate: null,
       currentWeekAttendance: null,
-      locationLat:  null,
-      locationLon:  null,
+      locationLat: null,
+      locationLon: null,
       template: { templateDesc: null }
     })
   }
@@ -535,7 +535,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
   if (customer) {
     if (customer.traineeId) {
       const trainer = await Trainee.findById(customer.traineeId);
-      const gymLocation = await Owner.findById(customer.gymId, {_id : 0, gymLocationLat: 1,gymLocationLon: 1});
+      const gymLocation = await Owner.findById(customer.gymId, { _id: 0, gymLocationLat: 1, gymLocationLon: 1 });
       const thisWeekAttendance = await getThisWeekAttendance(jwtoken.ownerId)
       res.status(200).json({
         contact: customer.contact,
@@ -550,8 +550,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         experience: customer.experience,
         currentBeginDate: customer.currentBeginDate,
         currentWeekAttendance: thisWeekAttendance ? thisWeekAttendance : null,
-        locationLat: gymLocation? parseFloat(gymLocation.gymLocationLat): null,
-        locationLon:  gymLocation? parseFloat(gymLocation.gymLocationLon): null,
+        locationLat: gymLocation ? parseFloat(gymLocation.gymLocationLat) : null,
+        locationLon: gymLocation ? parseFloat(gymLocation.gymLocationLon) : null,
         template: { templateDesc: null }
       });
     }
@@ -569,8 +569,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
         experience: null,
         currentBeginDate: customer.currentBeginDate,
         currentWeekAttendance: null,
-        locationLat:  null,
-        locationLon:  null,
+        locationLat: null,
+        locationLon: null,
         template: { templateDesc: null }
       });
     }
@@ -589,8 +589,8 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       experience: null,
       currentBeginDate: null,
       currentWeekAttendance: null,
-      locationLat:  null,
-      locationLon:  null,
+      locationLat: null,
+      locationLon: null,
       template: { templateDesc: null }
     });
   }
@@ -600,7 +600,7 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
 
 router.delete('/removeSet', verifyToken, async (req: any, res: any) => {
 
-  const ia = await ExerciseDescription.deleteOne({"_id": {"$oid": req.body.exerciseDescriptionId}});
+  const ia = await ExerciseDescription.deleteOne({ "_id": { "$oid": req.body.exerciseDescriptionId } });
   console.log(ia);
   res.status(200).json({ message: 'Deleted Successfully' })
 
@@ -614,7 +614,7 @@ router.post('/addSet', verifyToken, async (req: any, res: any) => {
   if (customer) {
 
     const day = new Date().getDay();
-    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day });
+    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day.toString() });
 
     if (customerTemplate) {
 
@@ -657,7 +657,7 @@ router.post('/addExercise', verifyToken, async (req: any, res: any) => {
     const day = new Date().getDay();
 
 
-    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day });
+    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day.toString() });
 
     if (customerTemplate) {
       const exerciseDescription = new ExerciseDescription({
@@ -716,7 +716,7 @@ router.get('/template', verifyToken, async (req: any, res: Response<ExerciseTemp
 
   if (customer) {
     const day = new Date().getDay();
-    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day });
+    const customerTemplate = await Template.findOne({ customerId: customer.id, day: day.toString() });
     if (customerTemplate) {
 
       const allExerciseDescription = await ExerciseDescription.aggregate([

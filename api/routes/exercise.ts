@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 import express, { Request, Response } from 'express';
 import Exercise from '../model/exercise';
 import { ExerciseIdAndName, GetAllExercises, UserExercises } from '../../responses';
-import ExerciseDesc from '../model/exerciseDesc'
-import TemplateDesc from '../model/templateDesc';
+import ExerciseDescription from '../model/exerciseDescription'
+import Template from '../model/template';
 const verifyToken = require("../middleware/jwt");
 
 
@@ -22,12 +22,12 @@ router.get('/userExercises', verifyToken, async (req: any, res: Response<UserExe
 
     const customerId = req.jwt.token;
 
-    const templateDescIds = await TemplateDesc.find(customerId, { _id: 1 });
+    const templateIds = await Template.find(customerId, { _id: 1 });
 
     const uniqueExercises = new Map<string, ExerciseIdAndName>();
 
-    for (const templateDesc of templateDescIds) {
-        const exercises = await ExerciseDesc.find({ templateDescId: templateDesc._id });
+    for (const template of templateIds) {
+        const exercises = await ExerciseDescription.find({ templateId: template._id });
         exercises.forEach(exercise => uniqueExercises.set(exercise.exerciseId, { _id: exercise.exerciseId, name: exercise.exerciseName }));
     }
 

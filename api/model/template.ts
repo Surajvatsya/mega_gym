@@ -1,14 +1,14 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface Template extends Document {
-    day:number,
-    customerId : string, 
+    day: string,
+    customerId: string,
 }
 
 const templateSchema: Schema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
-    day:Number,
-    customerId : String, 
+    day: String,
+    customerId: String,
 });
 
 const Template = mongoose.model<Template>('template', templateSchema);
