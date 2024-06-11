@@ -46,7 +46,7 @@ router.post("/addExerciseToTemplate", verifyToken, async (req: any, res: any) =>
         if (template) {
             const isExercisePresent = await ExerciseDescription.findOne({ exerciseId: req.body.exerciseId, templateId: template._id });
             if (isExercisePresent) {
-                res.status(200).json({ message: `Already ${req.body.exerciseName} is present for  ${daysOfWeek[today]} with id ${isExercisePresent._id}.` });
+                res.status(200).json({ message: `EXERCISE_ALREADY_ADDED` });
             }
             else {
                 const newExerciseDescription = new ExerciseDescription({
