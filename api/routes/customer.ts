@@ -24,11 +24,10 @@ const router = express.Router();
 const getThisWeekAttendance = async (customerId: any) => {
   const thisMonth = new Date().getMonth() + 1;
   const thisYear = new Date().getFullYear();
-  const noOfDaysInCurrWeek = new Date().getDay(); // Thursday -> 4 
-  const todayDate = new Date().getDate(); // 6 June
-  const startingDateOfWeek = todayDate - (noOfDaysInCurrWeek - 1); // 6 - 3 = 3 -> Monday
+  const noOfDaysInCurrWeek = new Date().getDay() == 0? 7: new Date().getDay(); // Sunday -> 0
+  const todayDate = new Date().getDate(); //  9 June
+  const startingDateOfWeek = todayDate - (noOfDaysInCurrWeek - 1); // 9 - 6 = 3 -> Monday
   const lastDayOfWeek = startingDateOfWeek + 6; // (9 june)
-
 
   const attendance = await Attendance.find({ customerId, year: thisYear, month: thisMonth })
 
