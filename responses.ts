@@ -54,7 +54,8 @@ export interface CustomerDetails {
     experience: string,
     currentFinishDate: string,
     gymId: string,
-    expiring: number | null
+    expiring: number | null,
+    expiryIndays: number | null,
     expired: number | null,
     profilePic: String | null
 }

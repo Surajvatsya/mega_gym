@@ -165,6 +165,7 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
         profilePic: null,
         goal: customer.goal,
         experience: customer.experience,
+        expiryIndays: expiryIndays
       };
 
       profilePicPromises.push(getProfilePic(customer.id).then(profilePic => {
@@ -183,7 +184,7 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
     await Promise.all(profilePicPromises);
 
     groupedData.current.sort(function (a, b) {
-      return (a.expiring ?? Infinity) - (b.expiring ?? Infinity)
+      return (a.expiryIndays ?? Infinity) - (b.expiryIndays ?? Infinity)
     })
 
     groupedData.expired.sort(function (a, b) {
