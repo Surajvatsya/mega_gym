@@ -134,14 +134,13 @@ router.delete("/removeExercise", verifyToken, async (req: any, res: any) => {
     }
 })
 
-router.get("/getExercisesForDay", verifyToken, async (req: any, res: Response<ExerciseForDayResponse>) => {
+router.post("/getExercisesForDay", verifyToken, async (req: any, res: Response<ExerciseForDayResponse>) => {
     try {
         const customerId = req.jwt.ownerId;
         const today = new Date().getDay();
         const daysOfWeek: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const day = daysOfWeek[today];
-        console.log("day ", day);
+        const day = daysOfWeek[req.body.day];
 
         const exercises = await Template.aggregate([
             {
