@@ -31,11 +31,10 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
             return res.status(200).json(resp);
         }
         const lifeTImeAttandance_ = lifeTImeAttandance.map((att) => {
-            const attendanceInNumber = att.days.toString(2).split('').map(Number).reverse();
             return {
                 month: months[att.month - 1],
                 year: att.year,
-                days: attendanceInNumber
+                days: att.days.split('').map(Number)
             }
         })
 
@@ -99,11 +98,10 @@ router.get("/:customerId/getLifeTimeAttendance", verifyToken, async (req: any, r
             return res.status(200).json(resp);
         }
         const lifeTImeAttandance_ = lifeTImeAttandance.map((att) => {
-            const attendanceInNumber = att.days.toString(2).split('').map(Number).reverse();
             return {
                 month: months[att.month - 1],
                 year: att.year,
-                days: attendanceInNumber
+                days: att.days.split('').map(Number)
             }
         })
 

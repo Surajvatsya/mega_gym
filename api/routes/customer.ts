@@ -24,32 +24,20 @@ const router = express.Router();
 const getThisWeekAttendance = async (customerId: any) => {
   const thisMonth = new Date().getMonth() + 1;
   const thisYear = new Date().getFullYear();
-  const noOfDaysInCurrWeek = new Date().getDay() == 0? 7: new Date().getDay(); // Sunday -> 0
-  const todayDate = new Date().getDate(); //  9 June
+  const noOfDaysInCurrWeek = new Date().getDay() == 0 ? 7 : new Date().getDay(); // Monday -> 1
+  const todayDate = new Date().getDate(); //  17 June
   const startingDateOfWeek = todayDate - (noOfDaysInCurrWeek - 1); // 9 - 6 = 3 -> Monday
   const lastDayOfWeek = startingDateOfWeek + 6; // (9 june)
 
-  const attendance = await Attendance.find({ customerId, year: thisYear, month: thisMonth })
+  const currMonthAttendance = await Attendance.findOne({ customerId, year: thisYear, month: thisMonth }, {_id:0, days : 1})
 
-  if (!attendance || attendance.length === 0 || !attendance[0].days) {
-    console.log("Attendance is null", attendance);
-    const createAttandanceRecord = new Attendance({
-      _id: new mongoose.Types.ObjectId(),
-      customerId,
-      year: thisYear,
-      month: thisMonth,
-      days: 0
-    })
-    await createAttandanceRecord.save();
-    return "0";
-  } else {
-    const binaryString = attendance[0].days.toString(2).split('').reverse().join('');
-    console.log("binaryString", binaryString);
-    const bc = binaryString.slice(startingDateOfWeek - 1, lastDayOfWeek + 1);
-    console.log("bc", bc);
-    return bc;
-
-  }
+  //although this case is not possible
+    if(!currMonthAttendance){
+      console.log("Current month attendance is Null", currMonthAttendance);
+      return "";
+    }
+    console.log("currMonthAttendance", currMonthAttendance.days);
+    return currMonthAttendance.days.substring(startingDateOfWeek-1);
 }
 
 
@@ -238,9 +226,12 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       currentPlanId: newPlan._id,
       referralCode: Math.floor(100000 + Math.random() * 900000)
     });
-
+    var att= "";
     // const current = new Date().getMonth;
     // console.log("new Date().getMonth", current);
+    for (var i=1; i<new Date().getDate(); i++){
+      att+="0";
+    }
 
     // const todayDate = new Date().getDate();
     const createAttandanceRecord = new Attendance({
@@ -248,7 +239,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       customerId,
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
-      days: 0
+      days: att
     })
 
     const [planResult, customerResult, profilePic] = await Promise.all([
@@ -477,31 +468,33 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
         customerId,
         year: currYear,
         month: currMonth,
-        days: 0
+        days: "1"
       })
 
       await createAttandanceRecord.save();
-    }
-
-    const attendanceDays = await Attendance.findOne({ customerId, month: currMonth, year: currYear }, { days: 1, _id: 0 });
-    console.log(" customerId, currMonth, currYear ", attendanceDays);
-
-    if (!attendanceDays) {
-      return res.status(404).json({ message: 'Attendance not found' });
-    }
-
-    if (typeof (attendanceDays.days) == 'number') {
-      const updateAttandanceDays = attendanceDays.days | (1 << (currDay - 1));
-      const updatedAttandanceDays = await Attendance.findOneAndUpdate({ customerId, month: currMonth, year: currYear }, { days: updateAttandanceDays })
-
-      if (!updatedAttandanceDays) {
-        return res.status(404).json({ message: 'Attendance could not update' });
-      }
       res.status(200).json({ "msg": "updated attandance successfully" })
+
     }
     else {
-      console.log("Empty attandance , couldn't update");
-
+      const attendanceDays = await Attendance.findOneAndUpdate(
+        { customerId, month: currMonth, year: currYear },
+        [
+          {
+            $set: {
+              days: { $concat: ["$days", "1"] }
+            }
+          }
+        ],
+        { new: true, projection: { days: 1, _id: 0 } } // Return the updated document with only the `days` field
+      );
+  
+      if (!attendanceDays) {
+        console.log("Attendance in days = ", attendanceDays);
+        return res.status(404).json({ message: 'Attendance not found' });
+      }
+      else{
+        res.status(200).json({ "msg": "updated attandance successfully" })
+      }
     }
   } catch (error) {
     res.status(503).json({ "msg": "Internal server error" })
@@ -775,7 +768,8 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
   if (exercise) {
 
     const initialGrowthGroup: any = {};
-
+    // Initializing initialGrowthGroup with a correct type
+    //  const initialGrowthGroup: Record<string, WorkoutLogs[]> = {};
 
     const customerId = jwtoken.ownerId;
     const exerciseId = exercise.id ?? "";
@@ -803,11 +797,43 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
       return acc;
     }, initialGrowthGroup);
 
+    // groupedLogs = 
+    //   {
+    //     "2021-6-5": [
+    //         { "timestamp": "1622895600000", "exerciseId": "ex1", ... }
+    //     ],
+    //     "2021-6-6": [
+    //         { "timestamp": "1622982000000", "exerciseId": "ex1", ... },
+    //         { "timestamp": "1622982000000", "exerciseId": "ex2", ... }
+    //     ]
+    // }
+
+
     // Map grouped logs to growth data
     const growthData = Object.entries(groupedLogs).map(([keys, logs]) => {
       const totalProduct = logs.reduce((total, log) => total + log.reps * log.weight, 0);
       return { keys, totalProduct };
     });
+
+
+    // Object.entries(groupedLogs) = 
+    //   [
+    //     ["2021-6-5", [
+    //         { "timestamp": "1622895600000", "exerciseId": "ex1", ... }
+    //     ]],
+    //     ["2021-6-6", [
+    //         { "timestamp": "1622982000000", "exerciseId": "ex1", ... },
+    //         { "timestamp": "1622982000000", "exerciseId": "ex2", ... }
+    //     ]]
+    // ]
+
+    // The resulting growthData will look like this:
+
+    //   [
+    //     { "key": "2021-6-5", "totalProduct": 10 * 50 },
+    //     { "key": "2021-6-6", "totalProduct": (8 * 60) + (12 * 40) }
+    // ]
+
 
     // Get unique dates and select the last 10 dates
     const uniqueDates = [...new Set(growthData.map(item => item.keys))];
@@ -818,6 +844,8 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     // Extract titles and data
     const growthTitles: string[] = Array.from({ length: top10GrowthData.length }, (_, i) => `s${i + 1}`);
+    // ["s1", "s2", "s3", "s4", "s5", ...., "s10"]
+
     const growthDatas: number[] = top10GrowthData.map(item => item.totalProduct);
 
     const pipeline: any = [

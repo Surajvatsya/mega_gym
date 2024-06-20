@@ -4,6 +4,7 @@ import app from './app'
 const http = require("http");
 const cron = require("node-cron");
 import Customer from "./api/model/customer";
+import Attendance from "./api/model/attendance";
 const admin = require("firebase-admin");
 var cors = require('cors')
 
@@ -69,7 +70,18 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
     });
 });
 
+const markAbsent = cron.schedule("0 0 * * * *", async () => {
+    const today = new Date().getDate();
+    Attendance.find().exec().then((customerAttendance:any) => {
+        if (customerAttendance.days.length()!=today){
+            customerAttendance.days+='0';
+            customerAttendance.save();
+        }
+    });
+});
+
 reminderJob.start();
+markAbsent.start();
 
 const port = process.env.PORT;
 
@@ -78,5 +90,3 @@ server.listen(port, () => {
     console.log("this app is running on " + port);
 });
 
-
-// PRIYANSHU UPADHYAY
