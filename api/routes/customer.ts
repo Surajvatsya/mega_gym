@@ -16,7 +16,7 @@ import { TemplateResponse } from '../../responses';
 import WorkoutLog, { WorkoutLogs } from "../model/workoutLog";
 import Template from "../model/template";
 import ExerciseDescription from "../model/exerciseDescription";
-
+import * as Loadash from 'lodash';
 
 require("dotenv").config();
 const router = express.Router();
@@ -29,15 +29,15 @@ const getThisWeekAttendance = async (customerId: any) => {
   const startingDateOfWeek = todayDate - (noOfDaysInCurrWeek - 1); // 9 - 6 = 3 -> Monday
   const lastDayOfWeek = startingDateOfWeek + 6; // (9 june)
 
-  const currMonthAttendance = await Attendance.findOne({ customerId, year: thisYear, month: thisMonth }, {_id:0, days : 1})
+  const currMonthAttendance = await Attendance.findOne({ customerId, year: thisYear, month: thisMonth }, { _id: 0, days: 1 })
 
   //although this case is not possible
-    if(!currMonthAttendance){
-      console.log("Current month attendance is Null", currMonthAttendance);
-      return "";
-    }
-    console.log("currMonthAttendance", currMonthAttendance.days);
-    return currMonthAttendance.days.substring(startingDateOfWeek-1);
+  if (!currMonthAttendance) {
+    console.log("Current month attendance is Null", currMonthAttendance);
+    return "";
+  }
+  console.log("currMonthAttendance", currMonthAttendance.days);
+  return currMonthAttendance.days.substring(startingDateOfWeek - 1);
 }
 
 
@@ -226,11 +226,11 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       currentPlanId: newPlan._id,
       referralCode: Math.floor(100000 + Math.random() * 900000)
     });
-    var att= "";
+    var att = "";
     // const current = new Date().getMonth;
     // console.log("new Date().getMonth", current);
-    for (var i=1; i<new Date().getDate(); i++){
-      att+="0";
+    for (var i = 1; i < new Date().getDate(); i++) {
+      att += "0";
     }
 
     // const todayDate = new Date().getDate();
@@ -487,12 +487,12 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
         ],
         { new: true, projection: { days: 1, _id: 0 } } // Return the updated document with only the `days` field
       );
-  
+
       if (!attendanceDays) {
         console.log("Attendance in days = ", attendanceDays);
         return res.status(404).json({ message: 'Attendance not found' });
       }
-      else{
+      else {
         res.status(200).json({ "msg": "updated attandance successfully" })
       }
     }
@@ -758,6 +758,46 @@ router.get('/template', verifyToken, async (req: any, res: Response<ExerciseTemp
   return;
 });
 
+const getUserRank = ((recentVolume: any) => {
+  let userRanking: any;
+  switch (true) {
+    case ((recentVolume >= 0) && (recentVolume < 100)):
+      userRanking = "0-100";
+      break;
+    case (recentVolume >= 100 && recentVolume < 200):
+      userRanking = "100-200";
+      break;
+    case (recentVolume >= 200 && recentVolume < 300):
+      userRanking = "200-300";
+      break;
+    case (recentVolume >= 300 && recentVolume < 400):
+      userRanking = "300-400";
+      break;
+    case (recentVolume >= 400 && recentVolume < 500):
+      userRanking = "400-500";
+      break;
+    case (recentVolume >= 500 && recentVolume < 600):
+      userRanking = "500-600";
+      break;
+    case (recentVolume >= 600 && recentVolume < 700):
+      userRanking = "600-700";
+      break;
+    case (recentVolume >= 700 && recentVolume < 800):
+      userRanking = "700-800";
+      break;
+    case (recentVolume >= 800 && recentVolume < 900):
+      userRanking = "800-900";
+      break;
+    case (recentVolume >= 900 && recentVolume <= 1000):
+      userRanking = "900-1000";
+      break;
+    default:
+      userRanking = ">1000";
+
+  };
+  return userRanking;
+})
+
 router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<WorkoutAnalysisResponse>) => {
 
   const jwtoken: JWToken = req.jwt
@@ -771,10 +811,14 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
     // Initializing initialGrowthGroup with a correct type
     //  const initialGrowthGroup: Record<string, WorkoutLogs[]> = {};
 
-    const customerId = jwtoken.ownerId;
+    const customerId = new mongoose.Types.ObjectId(jwtoken.ownerId);
     const exerciseId = exercise.id ?? "";
+    console.log("customerId", typeof (customerId));
 
     const logs = await WorkoutLog.find({ customerId, exerciseId }) as WorkoutLogs[];
+
+    console.log("logs", logs);
+
 
     logs.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
@@ -797,6 +841,10 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
       return acc;
     }, initialGrowthGroup);
 
+
+    console.log("groupedLogs", groupedLogs);
+
+
     // groupedLogs = 
     //   {
     //     "2021-6-5": [
@@ -815,6 +863,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
       return { keys, totalProduct };
     });
 
+    console.log("growthData", growthData);
 
     // Object.entries(groupedLogs) = 
     //   [
@@ -848,85 +897,115 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     const growthDatas: number[] = top10GrowthData.map(item => item.totalProduct);
 
+    console.log("growthDatas", growthDatas);
+
+
     const pipeline: any = [
 
       {
         $match:
         {
           "exerciseId": exerciseId,
-          "reps": { $gte: 8 }
+          // "reps": { $gte: 8 }
+        }
+      },
+      {
+        $sort: {
+          "timestamp": -1 // Assuming 'date' is the field indicating the timestamp of the workout log
         }
       },
 
       // Group workout logs by customer and find the maximum weight for each customer
       {
         $group: {
-          _id: "$customerId", // Assuming the field is called 'customerId'
-          maxWeight: { $max: "$weight" } // Assuming the field containing weight is 'weight'
+          _id: "$customerId",
+          recentWeights: { $push: "$weight" },
+          recentReps: { $push: "$reps" }
         }
       },
-      // Define buckets for weight ranges
       {
         $project: {
-          bucket: {
-            $switch: {
-              branches: [
-                { case: { $and: [{ $gte: ["$maxWeight", 0] }, { $lt: ["$maxWeight", 10] }] }, then: "10" },
-                { case: { $and: [{ $gte: ["$maxWeight", 10] }, { $lt: ["$maxWeight", 20] }] }, then: "20" },
-                { case: { $and: [{ $gte: ["$maxWeight", 20] }, { $lt: ["$maxWeight", 30] }] }, then: "30" },
-                { case: { $and: [{ $gte: ["$maxWeight", 30] }, { $lt: ["$maxWeight", 40] }] }, then: "40" },
-                { case: { $and: [{ $gte: ["$maxWeight", 40] }, { $lt: ["$maxWeight", 50] }] }, then: "50" },
-                { case: { $and: [{ $gte: ["$maxWeight", 50] }, { $lt: ["$maxWeight", 60] }] }, then: "60" },
-                { case: { $and: [{ $gte: ["$maxWeight", 60] }, { $lt: ["$maxWeight", 70] }] }, then: "70" },
-                { case: { $and: [{ $gte: ["$maxWeight", 70] }, { $lt: ["$maxWeight", 80] }] }, then: "80" },
-                { case: { $and: [{ $gte: ["$maxWeight", 80] }, { $lt: ["$maxWeight", 90] }] }, then: "90" },
-                { case: { $and: [{ $gte: ["$maxWeight", 90] }, { $lte: ["$maxWeight", 100] }] }, then: "100" }
-              ],
-              default: "Other" // If the weight doesn't fall into any defined range
-            }
-          }
+          weights: { $slice: ["$recentWeights", 3] },
+          reps: { $slice: ["$recentReps", 3] }
         }
       },
-      // Count the number of customers in each bucket
-      {
-        $group: {
-          _id: "$bucket",
-          count: { $sum: 1 }
-        }
-      },
-      // Optionally, sort the buckets by weight range
-      {
-        $sort: { _id: 1 }
-      }
     ];
+    const lastThreeSets = await WorkoutLog.aggregate(pipeline);
+    const volumeAndCount: Map<string, number> = new Map();
+    // const xyz : Record<string, number[]> = {}
+    lastThreeSets.forEach((singleSet) =>{
+      const userWeights = singleSet.weights;
+      const userReps = singleSet.reps;
+      var userVolume = 0;
+      for (var i=0; i<3; i++){
+        userVolume += (userWeights[i] * userReps[i]);
+      }
+      console.log("userVolume", userVolume);
+      const rating =  getUserRank(userVolume);
+      console.log("rating", rating);
+      const count = volumeAndCount.get(rating);
+      if (count){
+        volumeAndCount.set(rating, count + 1);
+      }else{
+        volumeAndCount.set(rating, 1);
+      }
+    });
 
+    console.log("hashMapForvolumeAndCount", volumeAndCount);
+   
+    const userRecentLog = await WorkoutLog.find({ customerId: jwtoken.ownerId, exerciseId }, { _id: 0, weight: 1, reps: 1 }).sort({ timestamp: -1 }).limit(3)
+    console.log("userRecentLog", userRecentLog);
 
+    const recentVolume = userRecentLog.reduce((acc: any, recentLog: any) => {
+      acc += (recentLog.weight * recentLog.reps);
+      return acc;
+    }, 0)
+    console.log("recentVolume", recentVolume);
+    const userRank = getUserRank(recentVolume)
+    console.log("userRanking", userRank);
 
-    const bucketCounts = await WorkoutLog.aggregate(pipeline);
+    const volumeRangeAndCountArray = [...volumeAndCount.entries()];
+    volumeRangeAndCountArray.sort((a:any[], b:any[]) => {
+      const volumeRange:string = a[0];
+      const frequency:string = b[0];
+    
+      if (typeof volumeRange === 'string') {
+        // Extract numeric parts and sort if volumeRange is a string
+        const startA = parseInt(volumeRange.split('-')[0], 10);
+        const startB = parseInt(frequency.split('-')[0], 10);
+        return startA  - startB ;
+      } else {
+        // Handle non-string keys (throw error, return default value, etc.)
+        console.error("Encountered non-string key:", volumeRange);
+        // You can return 0 or a default value here if you want to maintain order
+        return 0;
+      }
+    });
+    
+    console.log("volumeRangeAndCountArray", volumeRangeAndCountArray);
 
+    const userIndex = volumeRangeAndCountArray.findIndex(rankAndCount => rankAndCount[0] == userRank)
 
+    console.log("userIndex", userIndex);
 
+    const allUsersCount = volumeRangeAndCountArray.reduce((total, volumeAndCountTuple) => total + volumeAndCountTuple[1], 0)
 
-    const userMaxWeightLog = await WorkoutLog.find({ customerId: jwtoken.ownerId }).sort({ weight: -1 }).limit(1)
+    console.log("allUsersCount", allUsersCount);
 
-    const userMaxWeight = userMaxWeightLog[0] != undefined ? Math.ceil(userMaxWeightLog[0].weight / 10) * 10 : 0;
-    const userIndex = bucketCounts.findIndex(bucket => bucket._id == userMaxWeight)
+    const usersRankLessThanEqCount = volumeRangeAndCountArray.slice(0, userIndex + 1).reduce((total, volumeAndCountTuple) => total + volumeAndCountTuple[1], 0);
 
+    console.log("usersRankLessThanEqCount", usersRankLessThanEqCount);
 
-    const allUsersCount = bucketCounts.reduce((total, bucket) => total + bucket.count, 0)
-    const usersWeightLessThanEqCount = bucketCounts.slice(0, userIndex + 1).reduce((total, bucket) => total + bucket.count, 0);
+    const percentile = Math.round((usersRankLessThanEqCount / allUsersCount) * 100);
 
+    console.log("percentile", percentile);
 
-    const maxCount = Math.max(...bucketCounts.map(bucket => bucket.count)) ?? 0
-
-    // handled the case when user is the only person to perform the exercise
-    const percentile = Math.round((usersWeightLessThanEqCount != 0 ? usersWeightLessThanEqCount : allUsersCount / allUsersCount) * 100);
 
     res.status(200).json({
       comparisionData: {
-        titles: bucketCounts.map((bucket) => bucket._id),
-        data: bucketCounts.map((bucket) => bucket.count),
-        maxLimitOfData: maxCount != -Infinity ? maxCount : 0,
+        titles: volumeRangeAndCountArray.map((volumeAndCountTuple) =>  volumeAndCountTuple[0]), // x (fixed)
+        data: volumeRangeAndCountArray.map((volumeAndCountTuple) =>  volumeAndCountTuple[1]), //y
+        maxLimitOfData: allUsersCount,
         minLimitOfData: 0,
         top: Number.isNaN(percentile) ? 0 : percentile,
         highlightTitle: userIndex
@@ -966,7 +1045,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     });
   }
-})
+  })
 
 
 router.get('/idCard', verifyToken, async (req: any, res: Response<IdCardResponse>) => {

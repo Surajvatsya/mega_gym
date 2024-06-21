@@ -70,12 +70,17 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
     });
 });
 
+//solve issue of 1st date here
 const markAbsent = cron.schedule("0 0 * * * *", async () => {
     const today = new Date().getDate();
     Attendance.find().exec().then((customerAttendance:any) => {
-        if (customerAttendance.days.length()!=today){
-            customerAttendance.days+='0';
-            customerAttendance.save();
+        if (customerAttendance) { // Check if customerAttendance exists
+            if (customerAttendance.days.length !== today) {
+                customerAttendance.days += '0';
+                customerAttendance.save();
+            }
+        } else {
+            console.log("No attendance record found!"); // Handle no record scenario
         }
     });
 });
