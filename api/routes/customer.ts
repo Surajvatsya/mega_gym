@@ -330,7 +330,7 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
 
 router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Response<GetCustomerProfileResponse>) => {
   try {
-    const customerId = req.params.customerId;
+    const customerId = new mongoose.Types.ObjectId(req.params.customerId);
     const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({
