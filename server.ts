@@ -44,7 +44,7 @@ function midnightTime(date: Date): Date {
 
 // for every 5 seconds */5 * * * * *
 // for 8 am 0 8 * * * *
-const reminderJob = cron.schedule("* * * * * *", async () => {
+const reminderJob = cron.schedule("0 8 * * *", async () => {
 
     Customer.find().exec().then((customers:any) => {
 
