@@ -937,7 +937,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
       const userWeights = singleSet.weights;
       const userReps = singleSet.reps;
       var userVolume = 0;
-      for (var i=0; i<3; i++){
+      for (var i=0; i < (userWeights.length < 3 ?  userWeights.length : 3); i++){
         userVolume += (userWeights[i] * userReps[i]);
       }
       console.log("userVolume", userVolume);
