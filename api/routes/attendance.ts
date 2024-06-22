@@ -4,6 +4,7 @@ import express, { Request, Response } from 'express';
 const router = express.Router();
 const verifyToken = require("../middleware/jwt");
 import { LifeTimeAttendance } from "../../responses";
+import mongoose from "mongoose";
 const jwt = require("jsonwebtoken");
 
 const customSort = (a: any, b: any): number => {
@@ -82,7 +83,7 @@ router.get("/getLifeTimeAttendance", verifyToken, async (req: any, res: Response
 
 router.get("/:customerId/getLifeTimeAttendance", verifyToken, async (req: any, res: Response<LifeTimeAttendance>) => {
     try {
-        const customerId = req.params.customerId;
+        const customerId = new mongoose.Types.ObjectId(req.params.customerId);
         const lifeTImeAttandance = await Attendance.find({ customerId }, { _id: 0, customerId: 0, __v: 0 });
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         if (!lifeTImeAttandance || lifeTImeAttandance.length === 0 || !lifeTImeAttandance[0].days) {
