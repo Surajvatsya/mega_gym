@@ -462,20 +462,6 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
     const currDay = new Date().getDate();
     const currMonth = new Date().getMonth() + 1;
     const currYear = new Date().getFullYear();
-    if (currDay == 1) {
-      const createAttandanceRecord = new Attendance({
-        _id: new mongoose.Types.ObjectId(),
-        customerId,
-        year: currYear,
-        month: currMonth,
-        days: "1"
-      })
-
-      await createAttandanceRecord.save();
-      res.status(200).json({ "msg": "updated attandance successfully" })
-
-    }
-    else {
       const attendanceDays = await Attendance.findOneAndUpdate(
         { customerId, month: currMonth, year: currYear },
         [
@@ -495,7 +481,6 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
       else {
         res.status(200).json({ "msg": "updated attandance successfully" })
       }
-    }
   } catch (error) {
     res.status(503).json({ "msg": "Internal server error" })
     console.log("Error : ", error);

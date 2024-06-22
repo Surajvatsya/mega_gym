@@ -5,6 +5,7 @@ const http = require("http");
 const cron = require("node-cron");
 import Customer from "./api/model/customer";
 import Attendance from "./api/model/attendance";
+import mongoose from "mongoose";
 const admin = require("firebase-admin");
 var cors = require('cors')
 
@@ -74,6 +75,21 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
 const markAbsent = cron.schedule("0 0 * * * *", async () => {
     try{
         const today = new Date().getDate();
+        if(today == 1){
+            Customer.find().exec().then(async (customer:any) => {
+                if (customer){
+                    const createAttandanceRecord = new Attendance({
+                        _id: new mongoose.Types.ObjectId(),
+                        customerId: customer._id,
+                        year: new Date().getFullYear(),
+                        month: new Date().getMonth() + 1,
+                        days: ""
+                      })
+                  await createAttandanceRecord.save();
+                }
+                
+            })
+        }
         Attendance.find().exec().then((customerAttendance:any) => {
             if (customerAttendance) { // Check if customerAttendance exists
                 if (customerAttendance.days.length != today) {
