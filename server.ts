@@ -44,7 +44,7 @@ function midnightTime(date: Date): Date {
 
 // for every 5 seconds */5 * * * * *
 // for 8 am 0 8 * * * *
-const reminderJob = cron.schedule("0 8 * * * *", async () => {
+const reminderJob = cron.schedule("* * * * * *", async () => {
 
     Customer.find().exec().then((customers:any) => {
 
@@ -53,7 +53,7 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
             const currentDate = new Date();
             let timeDifference = (midnightTime(currentDate).getTime() - midnightTime(new Date(finishDate)).getTime()) / (1000 * 60 * 60 * 24);
 
-            if (timeDifference >= 0 && timeDifference <= 2) {
+            // if (timeDifference >= 0 && timeDifference <= 2) {
                 Owner.findById(customer.gymId).exec().then((owner:any) => {
 
                     if (owner && owner.deviceToken) {
@@ -66,7 +66,7 @@ const reminderJob = cron.schedule("0 8 * * * *", async () => {
                 });
 
 
-            }
+            // }
         })
     });
 });
