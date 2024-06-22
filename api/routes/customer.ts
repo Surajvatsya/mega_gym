@@ -397,15 +397,15 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
 
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
 
-  const requestBody: updateSubscriptionRequest = req.body;
-
-  let finishDate = addValidTillToCurrDate(
-    requestBody.currentBeginDate,
-    requestBody.validTill,
-  );
-
   try {
-    const customerId = req.params.customerId;
+    const requestBody: updateSubscriptionRequest = req.body;
+
+    let finishDate = addValidTillToCurrDate(
+      requestBody.currentBeginDate,
+      requestBody.validTill,
+    );
+
+    const customerId = new mongoose.Types.ObjectId(req.params.customerId);
     const newPlan = new Plan({
       _id: new mongoose.Types.ObjectId(),
       customerId: customerId,
@@ -420,7 +420,7 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
     let updateFields = {
       currentBeginDate: requestBody.currentBeginDate,
       currentFinishDate: finishDate,
-      currentPlanId: newPlan.id
+      currentPlanId: newPlan._id
     };
 
     const updatedCustomer = await Customer.findByIdAndUpdate(
