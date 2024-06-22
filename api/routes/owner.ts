@@ -399,6 +399,29 @@ router.get("/getUpiId", verifyToken, async (req: any, res: Response<GetUPIIdResp
     }
 });
 
+
+
+
+function roundToNearest(number:number) {
+    if (number < 10) {
+        return number; // No rounding needed if number is single-digit
+    }
+
+    // Calculate the order of magnitude
+    var magnitude = 1;
+    while (number >= 10) {
+        number = Math.floor(number / 10);
+        magnitude *= 10;
+    }
+
+    // Round up to the next higher 1000
+    var rounded = Math.ceil(number + 1) * magnitude;
+
+    return rounded;
+}
+
+
+
 router.post("/analysis/:key", verifyToken, async (req: any, res: Response<ExpandedAnalysisResponse>) => {
     try {
         const jwToken: JWToken = req.jwt
@@ -432,7 +455,7 @@ router.post("/analysis/:key", verifyToken, async (req: any, res: Response<Expand
                 data: values,
                 average: (total / keys.length).toString(),
                 total: total.toString(),
-                maxLimitOfData: maxValue * 1.2,
+                maxLimitOfData: roundToNearest(maxValue),
             };
 
             res.status(200).json(responseObject);
@@ -453,7 +476,7 @@ router.post("/analysis/:key", verifyToken, async (req: any, res: Response<Expand
                 data: values,
                 average: (total / keys.length).toString(),
                 total: total.toString(),
-                maxLimitOfData: maxValue * 1.2,
+                maxLimitOfData: roundToNearest(maxValue),
             };
 
             res.status(200).json(responseObject);
