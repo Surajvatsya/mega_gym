@@ -413,46 +413,65 @@ router.get("/getCustomerProfile/:customerId", verifyToken, async (req, res: Resp
 
 
 router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
-
   try {
     const requestBody: updateSubscriptionRequest = req.body;
-
-    let finishDate = addValidTillToCurrDate(
-      requestBody.currentBeginDate,
-      requestBody.validTill,
-    );
-
     const customerId = new mongoose.Types.ObjectId(req.params.customerId);
-    const newPlan = new Plan({
-      _id: new mongoose.Types.ObjectId(),
-      customerId: customerId,
-      duration: requestBody.validTill,
-      fee: requestBody.charges,
-      startDate: requestBody.currentBeginDate,
-      endDate: finishDate,
-    });
+    const customer = await Customer.findById(customerId);
+    if(customer){
+      if (requestBody.currentBeginDate > customer.currentFinishDate){
+        let finishDate = addValidTillToCurrDate(
+          requestBody.currentBeginDate,
+          requestBody.validTill,
+        );
+    
+        const newPlan = new Plan({
+          _id: new mongoose.Types.ObjectId(),
+          customerId: customerId,
+          duration: requestBody.validTill,
+          fee: requestBody.charges,
+          startDate: requestBody.currentBeginDate,
+          endDate: finishDate,
+        });
+    
+        const createPlan = await newPlan.save();
+    
+        let updateFields = {
+          currentBeginDate: requestBody.currentBeginDate,
+          currentFinishDate: finishDate,
+          currentPlanId: newPlan._id
+        };
+    
+        const updatedCustomer = await Customer.findByIdAndUpdate(
+          customerId,
+          updateFields,
+          {
+            new: true,
+          },
+        );
+    
+        if (!updatedCustomer)
+          return res.status(404).json({ message: "Customer not found" });
+        if (!createPlan)
+          return res.status(404).json({ message: "couldn't createPlan" });
+        res.status(200).json({ message: "Customer updated and new plan created successfully" });
+      }
+      else{
+        const currPlan = await Plan.findById(customer.currentPlanId);
+        if(currPlan){
+          currPlan.startDate = requestBody.currentBeginDate;
+          currPlan.duration = requestBody.validTill;
+          currPlan.fee = requestBody.charges;
+          currPlan.save();
+          res.status(200).json({ message: "Customer updated and plan created successfully" });
+        }
+        else{
+          console.log("Couldn't find current plan of customer",customer );
+          res.status(404).json({ message: "Couldn't find current plan of customer" });
+        }
+      }
+    }
 
-    const createPlan = await newPlan.save();
-
-    let updateFields = {
-      currentBeginDate: requestBody.currentBeginDate,
-      currentFinishDate: finishDate,
-      currentPlanId: newPlan._id
-    };
-
-    const updatedCustomer = await Customer.findByIdAndUpdate(
-      customerId,
-      updateFields,
-      {
-        new: true,
-      },
-    );
-
-    if (!updatedCustomer)
-      return res.status(404).json({ message: "Customer not found" });
-    if (!createPlan)
-      return res.status(404).json({ message: "couldn't createPlan" });
-    res.status(200).json({ updatedCustomer, createPlan });
+    
   } catch (error) {
     console.log("Error", error);
     res.status(500).json({ message: "Internal server error" });
