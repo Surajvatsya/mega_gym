@@ -150,7 +150,7 @@ export interface LifeTimeAttendance {
     data: {
         month: string,
         year: number,
-        days: number []
+        days: number[]
     }[]
 
 }
@@ -217,7 +217,7 @@ export interface UserExercises {
     exercises: ExerciseIdAndName[]
 }
 
-export interface ExerciseIdAndName{
-    _id : string,
+export interface ExerciseIdAndName {
+    _id: string,
     name: string
 }

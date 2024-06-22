@@ -16,7 +16,6 @@ import { TemplateResponse } from '../../responses';
 import WorkoutLog, { WorkoutLogs } from "../model/workoutLog";
 import Template from "../model/template";
 import ExerciseDescription from "../model/exerciseDescription";
-import * as Loadash from 'lodash';
 
 require("dotenv").config();
 const router = express.Router();
@@ -211,6 +210,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
       _id: customerId,
       name: requestBody.name,
       contact: requestBody.contact,
+
       currentBeginDate: requestBody.currentBeginDate,
       registeredAt: requestBody.currentBeginDate,
       currentFinishDate: addValidTillToCurrDate(
@@ -279,34 +279,51 @@ router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => 
       const customer = new Customer({
         _id: customerId,
         name: customerData.customerName,
-        email: customerData.email,
         contact: customerData.contact,
-        address: customerData.address,
-        age: customerData.age,
-        gender: customerData.gender,
-        bloodGroup: customerData.bloodGroup,
         currentBeginDate: customerData.currentBeginDate,
         registeredAt: customerData.currentBeginDate,
         currentFinishDate: addValidTillToCurrDate(customerData.currentBeginDate, customerData.validTill),
         gymName: customerData.gymName,
         gymId: jwToken.ownerId,
+        goal: customerData.goal,
+        experience: customerData.experience,
+        traineeId: customerData.mentorId,
+        lastUpdatedProfilePic: new Date().getTime().toString(),
+        currentPlanId: newPlan._id,
         referralCode: Math.floor(100000 + Math.random() * 900000)
       });
 
-      return { plan: newPlan, customer: customer };
+
+      var att = "";
+      // const current = new Date().getMonth;
+      // console.log("new Date().getMonth", current);
+      for (var i = 1; i < new Date().getDate(); i++) {
+        att += "0";
+      }
+
+      // const todayDate = new Date().getDate();
+      const createAttandanceRecord = new Attendance({
+        _id: new mongoose.Types.ObjectId(),
+        customerId,
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+        days: att
+      })
+
+      return { plan: newPlan, customer: customer, createAttandanceRecord };
     });
 
     const saveResults = await Promise.allSettled(newCustomers.map((customerObj: any) => {
-      return Promise.all([customerObj.plan.save(), customerObj.customer.save()]);
+      return Promise.all([customerObj.plan.save(), customerObj.customer.save(), customerObj.createAttandanceRecord.save()]);
     }));
 
-    const successfullyRegisteredCustomers: { new_plan: any, new_customer: any }[] = [];
+    const successfullyRegisteredCustomers: { new_plan: any, new_customer: any, attendance: any }[] = [];
     const errors: any[] = [];
 
     for (const result of saveResults) {
       if (result.status === "fulfilled") {
-        const [planResult, customerResult] = result.value;
-        successfullyRegisteredCustomers.push({ new_plan: planResult, new_customer: customerResult });
+        const [planResult, customerResult, attendanceResult] = result.value;
+        successfullyRegisteredCustomers.push({ new_plan: planResult, new_customer: customerResult, attendance: attendanceResult });
       } else if (result.status === "rejected") {
         errors.push(result.reason.message);
       }
@@ -462,25 +479,25 @@ router.post("/markAttendance", verifyToken, async (req: any, res) => {
     const currDay = new Date().getDate();
     const currMonth = new Date().getMonth() + 1;
     const currYear = new Date().getFullYear();
-      const attendanceDays = await Attendance.findOneAndUpdate(
-        { customerId, month: currMonth, year: currYear },
-        [
-          {
-            $set: {
-              days: { $concat: ["$days", "1"] }
-            }
+    const attendanceDays = await Attendance.findOneAndUpdate(
+      { customerId, month: currMonth, year: currYear },
+      [
+        {
+          $set: {
+            days: { $concat: ["$days", "1"] }
           }
-        ],
-        { new: true, projection: { days: 1, _id: 0 } } // Return the updated document with only the `days` field
-      );
+        }
+      ],
+      { new: true, projection: { days: 1, _id: 0 } } // Return the updated document with only the `days` field
+    );
 
-      if (!attendanceDays) {
-        console.log("Attendance in days = ", attendanceDays);
-        return res.status(404).json({ message: 'Attendance not found' });
-      }
-      else {
-        res.status(200).json({ "msg": "updated attandance successfully" })
-      }
+    if (!attendanceDays) {
+      console.log("Attendance in days = ", attendanceDays);
+      return res.status(404).json({ message: 'Attendance not found' });
+    }
+    else {
+      res.status(200).json({ "msg": "updated attandance successfully" })
+    }
   } catch (error) {
     res.status(503).json({ "msg": "Internal server error" })
     console.log("Error : ", error);
@@ -918,26 +935,26 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
     const lastThreeSets = await WorkoutLog.aggregate(pipeline);
     const volumeAndCount: Map<string, number> = new Map();
     // const xyz : Record<string, number[]> = {}
-    lastThreeSets.forEach((singleSet) =>{
+    lastThreeSets.forEach((singleSet) => {
       const userWeights = singleSet.weights;
       const userReps = singleSet.reps;
       var userVolume = 0;
-      for (var i=0; i < (userWeights.length < 3 ?  userWeights.length : 3); i++){
+      for (var i = 0; i < (userWeights.length < 3 ? userWeights.length : 3); i++) {
         userVolume += (userWeights[i] * userReps[i]);
       }
       console.log("userVolume", userVolume);
-      const rating =  getUserRank(userVolume);
+      const rating = getUserRank(userVolume);
       console.log("rating", rating);
       const count = volumeAndCount.get(rating);
-      if (count){
+      if (count) {
         volumeAndCount.set(rating, count + 1);
-      }else{
+      } else {
         volumeAndCount.set(rating, 1);
       }
     });
 
     console.log("hashMapForvolumeAndCount", volumeAndCount);
-   
+
     const userRecentLog = await WorkoutLog.find({ customerId: jwtoken.ownerId, exerciseId }, { _id: 0, weight: 1, reps: 1 }).sort({ timestamp: -1 }).limit(3)
     console.log("userRecentLog", userRecentLog);
 
@@ -950,15 +967,15 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
     console.log("userRanking", userRank);
 
     const volumeRangeAndCountArray = [...volumeAndCount.entries()];
-    volumeRangeAndCountArray.sort((a:any[], b:any[]) => {
-      const volumeRange:string = a[0];
-      const frequency:string = b[0];
-    
+    volumeRangeAndCountArray.sort((a: any[], b: any[]) => {
+      const volumeRange: string = a[0];
+      const frequency: string = b[0];
+
       if (typeof volumeRange === 'string') {
         // Extract numeric parts and sort if volumeRange is a string
         const startA = parseInt(volumeRange.split('-')[0], 10);
         const startB = parseInt(frequency.split('-')[0], 10);
-        return startA  - startB ;
+        return startA - startB;
       } else {
         // Handle non-string keys (throw error, return default value, etc.)
         console.error("Encountered non-string key:", volumeRange);
@@ -966,7 +983,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
         return 0;
       }
     });
-    
+
     console.log("volumeRangeAndCountArray", volumeRangeAndCountArray);
 
     const userIndex = volumeRangeAndCountArray.findIndex(rankAndCount => rankAndCount[0] == userRank)
@@ -988,8 +1005,8 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     res.status(200).json({
       comparisionData: {
-        titles: volumeRangeAndCountArray.map((volumeAndCountTuple) =>  volumeAndCountTuple[0]), // x (fixed)
-        data: volumeRangeAndCountArray.map((volumeAndCountTuple) =>  volumeAndCountTuple[1]), //y
+        titles: volumeRangeAndCountArray.map((volumeAndCountTuple) => volumeAndCountTuple[0]), // x (fixed)
+        data: volumeRangeAndCountArray.map((volumeAndCountTuple) => volumeAndCountTuple[1]), //y
         maxLimitOfData: allUsersCount,
         minLimitOfData: 0,
         top: Number.isNaN(percentile) ? 0 : percentile,
@@ -1030,7 +1047,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
 
     });
   }
-  })
+})
 
 
 router.get('/idCard', verifyToken, async (req: any, res: Response<IdCardResponse>) => {
