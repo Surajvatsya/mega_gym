@@ -76,7 +76,7 @@ const markAbsent = cron.schedule("0 0 * * * *", async () => {
         const today = new Date().getDate();
         Attendance.find().exec().then((customerAttendance:any) => {
             if (customerAttendance) { // Check if customerAttendance exists
-                if (customerAttendance.days.length !== today) {
+                if (customerAttendance.days.length != today) {
                     customerAttendance.days += '0';
                     customerAttendance.save();
                 }
