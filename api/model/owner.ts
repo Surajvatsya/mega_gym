@@ -31,7 +31,6 @@ const ownerSchema: Schema = new Schema({
     },
     address: {
         type: String,
-        required: true,
     },
     upiId: String,
     deviceToken: String,

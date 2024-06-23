@@ -70,8 +70,8 @@ const reminderJob = cron.schedule("0 8 * * *", async () => {
                     var profilePic = await getProfilePic(customer.id) ?? "";
 
                     if (owner && owner.deviceToken) {
-                        const title = `Subscription of ${customer.name} has ended`;
-                        const body = `Hello ${owner.name}, Subscription of ${customer.name} has ended`;
+                        const title = `Subscription Ended`;
+                        const body = `Subscription of ${customer.name} has ended`;
                         pushNotification(owner.deviceToken, title, body, profilePic);
                         console.log(title);
                         console.log(body);
