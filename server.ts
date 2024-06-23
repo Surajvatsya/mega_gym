@@ -19,29 +19,33 @@ admin.initializeApp({
 });
 
 function pushNotification(deviceToken: String, title: String, body: String, imageUrl: String) {
-    const message = {
+    const message:any = {
         notification: {
             title: title,
             body: body,
 
         },
-        android: {
+
+    token: deviceToken,
+    };
+
+    if (imageUrl !== "") {
+        message.android = {
             notification: {
                 imageUrl: imageUrl
             }
-        },
-        token: deviceToken,
-    };
+        };
+    }
 
-    admin
-        .messaging()
-        .send(message)
-        .then((response: any) => {
-            console.log("Notification sent successfully ", response);
-        })
-        .catch((err: any) => {
-            console.log("Error sending Notification ", err);
-        });
+admin
+    .messaging()
+    .send(message)
+    .then((response: any) => {
+        console.log("Notification sent successfully ", response);
+    })
+    .catch((err: any) => {
+        console.log("Error sending Notification ", err);
+    });
 }
 
 function midnightTime(date: Date): Date {
@@ -53,7 +57,7 @@ function midnightTime(date: Date): Date {
 // for 8 am 0 8 * * * *
 const reminderJob = cron.schedule("0 8 * * *", async () => {
 
-    Customer.find().exec().then((customers:any) => {
+    Customer.find().exec().then((customers: any) => {
 
         customers.forEach(async (customer: Customer) => {
             const finishDate = new Date(customer.currentFinishDate);
@@ -61,7 +65,7 @@ const reminderJob = cron.schedule("0 8 * * *", async () => {
             let timeDifference = (midnightTime(currentDate).getTime() - midnightTime(new Date(finishDate)).getTime()) / (1000 * 60 * 60 * 24);
 
             if (timeDifference >= 0 && timeDifference <= 2) {
-                Owner.findById(customer.gymId).exec().then(async (owner:any) => {
+                Owner.findById(customer.gymId).exec().then(async (owner: any) => {
 
                     var profilePic = await getProfilePic(customer.id) ?? "";
 
