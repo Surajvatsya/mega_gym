@@ -190,73 +190,84 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
     const requestBody: RegisterCustomerRequest = req.body
     const jwToken: JWToken = req.jwt
 
-    //omit it later a/q to some algo
-    // const trainee = Trainee.find({gymId: jwToken.ownerId}, {name : 1, _id : 0})
+    const verifyCustomer = await Customer.find({ contact: requestBody.contact, gymId: jwToken.ownerId });
 
-    const newPlan = new Plan({
-      _id: new mongoose.Types.ObjectId(),
-      gymId: jwToken.ownerId,
-      customerId: customerId,
-      duration: requestBody.validTill,
-      fee: requestBody.charges,
-      startDate: requestBody.currentBeginDate,
-      endDate: addValidTillToCurrDate(
-        requestBody.currentBeginDate,
-        requestBody.validTill,
-      ),
-    });
-
-    const customer = new Customer({
-      _id: customerId,
-      name: requestBody.name,
-      contact: requestBody.contact,
-
-      currentBeginDate: requestBody.currentBeginDate,
-      registeredAt: requestBody.currentBeginDate,
-      currentFinishDate: addValidTillToCurrDate(
-        requestBody.currentBeginDate,
-        requestBody.validTill,
-      ),
-      gymName: requestBody.gymName,
-      gymId: jwToken.ownerId,
-      goal: requestBody.goal,
-      experience: requestBody.experience,
-      traineeId: requestBody.mentorId,
-      lastUpdatedProfilePic: new Date().getTime().toString(),
-      currentPlanId: newPlan._id,
-      referralCode: Math.floor(100000 + Math.random() * 900000)
-    });
-    var att = "";
-    // const current = new Date().getMonth;
-    // console.log("new Date().getMonth", current);
-    for (var i = 1; i < new Date().getDate(); i++) {
-      att += "0";
+    if (verifyCustomer.length) {
+      res.status(200).json({ error: 'Customer already exists with that number in this gym' });
     }
+    else {
 
-    // const todayDate = new Date().getDate();
-    const createAttandanceRecord = new Attendance({
-      _id: new mongoose.Types.ObjectId(),
-      customerId,
-      year: new Date().getFullYear(),
-      month: new Date().getMonth() + 1,
-      days: att
-    })
+      //omit it later a/q to some algo
+      // const trainee = Trainee.find({gymId: jwToken.ownerId}, {name : 1, _id : 0})
 
-    const [planResult, customerResult, profilePic] = await Promise.all([
-      newPlan.save(),
-      customer.save(),
-      createAttandanceRecord.save(),
-      uploadBase64(customerId.toString(), requestBody.profilePic),
-      getProfilePic(customer.id)
-    ]);
+      const newPlan = new Plan({
+        _id: new mongoose.Types.ObjectId(),
+        gymId: jwToken.ownerId,
+        customerId: customerId,
+        duration: requestBody.validTill,
+        fee: requestBody.charges,
+        startDate: requestBody.currentBeginDate,
+        endDate: addValidTillToCurrDate(
+          requestBody.currentBeginDate,
+          requestBody.validTill,
+        ),
+      });
 
-    res
-      .status(200)
-      .json({ new_plan: planResult, new_customer: customerResult, profilePic: await getProfilePic(customer.id), attandance: createAttandanceRecord });
+      const customer = new Customer({
+        _id: customerId,
+        name: requestBody.name,
+        contact: requestBody.contact,
+
+        currentBeginDate: requestBody.currentBeginDate,
+        registeredAt: requestBody.currentBeginDate,
+        currentFinishDate: addValidTillToCurrDate(
+          requestBody.currentBeginDate,
+          requestBody.validTill,
+        ),
+        gymName: requestBody.gymName,
+        gymId: jwToken.ownerId,
+        goal: requestBody.goal,
+        experience: requestBody.experience,
+        traineeId: requestBody.mentorId,
+        lastUpdatedProfilePic: new Date().getTime().toString(),
+        currentPlanId: newPlan._id,
+        referralCode: Math.floor(100000 + Math.random() * 900000)
+      });
+      var att = "";
+      // const current = new Date().getMonth;
+      // console.log("new Date().getMonth", current);
+      for (var i = 1; i < new Date().getDate(); i++) {
+        att += "0";
+      }
+
+      // const todayDate = new Date().getDate();
+      const createAttandanceRecord = new Attendance({
+        _id: new mongoose.Types.ObjectId(),
+        customerId,
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+        days: att
+      })
+
+      const [planResult, customerResult, profilePic] = await Promise.all([
+        newPlan.save(),
+        customer.save(),
+        createAttandanceRecord.save(),
+        uploadBase64(customerId.toString(), requestBody.profilePic),
+        getProfilePic(customer.id)
+      ]);
+
+
+      res
+        .status(200)
+        .json({ new_plan: planResult, new_customer: customerResult, profilePic: await getProfilePic(customer.id), attandance: createAttandanceRecord });
+
+    }
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+
 });
 
 router.post("/registerBulkCustomer", verifyToken, async (req: any, res: any) => {
@@ -417,13 +428,13 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
     const requestBody: updateSubscriptionRequest = req.body;
     const customerId = new mongoose.Types.ObjectId(req.params.customerId);
     const customer = await Customer.findById(customerId);
-    if(customer){
-      if (requestBody.currentBeginDate > customer.currentFinishDate){
+    if (customer) {
+      if (requestBody.currentBeginDate > customer.currentFinishDate) {
         let finishDate = addValidTillToCurrDate(
           requestBody.currentBeginDate,
           requestBody.validTill,
         );
-    
+
         const newPlan = new Plan({
           _id: new mongoose.Types.ObjectId(),
           customerId: customerId,
@@ -432,15 +443,15 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
           startDate: requestBody.currentBeginDate,
           endDate: finishDate,
         });
-    
+
         const createPlan = await newPlan.save();
-    
+
         let updateFields = {
           currentBeginDate: requestBody.currentBeginDate,
           currentFinishDate: finishDate,
           currentPlanId: newPlan._id
         };
-    
+
         const updatedCustomer = await Customer.findByIdAndUpdate(
           customerId,
           updateFields,
@@ -448,30 +459,30 @@ router.put("/updateSubscription/:customerId", verifyToken, async (req, res) => {
             new: true,
           },
         );
-    
+
         if (!updatedCustomer)
           return res.status(404).json({ message: "Customer not found" });
         if (!createPlan)
           return res.status(404).json({ message: "couldn't createPlan" });
         res.status(200).json({ message: "Customer updated and new plan created successfully" });
       }
-      else{
+      else {
         const currPlan = await Plan.findById(customer.currentPlanId);
-        if(currPlan){
+        if (currPlan) {
           currPlan.startDate = requestBody.currentBeginDate;
           currPlan.duration = requestBody.validTill;
           currPlan.fee = requestBody.charges;
           currPlan.save();
           res.status(200).json({ message: "Customer updated and plan created successfully" });
         }
-        else{
-          console.log("Couldn't find current plan of customer",customer );
+        else {
+          console.log("Couldn't find current plan of customer", customer);
           res.status(404).json({ message: "Couldn't find current plan of customer" });
         }
       }
     }
 
-    
+
   } catch (error) {
     console.log("Error", error);
     res.status(500).json({ message: "Internal server error" });
