@@ -6,6 +6,7 @@ const cron = require("node-cron");
 import Customer from "./api/model/customer";
 import Attendance from "./api/model/attendance";
 import mongoose from "mongoose";
+import { getProfilePic } from "./api/utils";
 const admin = require("firebase-admin");
 var cors = require('cors')
 
@@ -17,11 +18,17 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
 });
 
-function pushNotification(deviceToken: String, title: String, body: String) {
+function pushNotification(deviceToken: String, title: String, body: String, imageUrl: String) {
     const message = {
         notification: {
             title: title,
             body: body,
+
+        },
+        android: {
+            notification: {
+                imageUrl: imageUrl
+            }
         },
         token: deviceToken,
     };
@@ -48,18 +55,20 @@ const reminderJob = cron.schedule("0 8 * * *", async () => {
 
     Customer.find().exec().then((customers:any) => {
 
-        customers.forEach(async (customer:any) => {
+        customers.forEach(async (customer: Customer) => {
             const finishDate = new Date(customer.currentFinishDate);
             const currentDate = new Date();
             let timeDifference = (midnightTime(currentDate).getTime() - midnightTime(new Date(finishDate)).getTime()) / (1000 * 60 * 60 * 24);
 
             if (timeDifference >= 0 && timeDifference <= 2) {
-                Owner.findById(customer.gymId).exec().then((owner:any) => {
+                Owner.findById(customer.gymId).exec().then(async (owner:any) => {
+
+                    var profilePic = await getProfilePic(customer.id) ?? "";
 
                     if (owner && owner.deviceToken) {
                         const title = `Subscription of ${customer.name} has ended`;
                         const body = `Hello ${owner.name}, Subscription of ${customer.name} has ended`;
-                        pushNotification(owner.deviceToken, title, body);
+                        pushNotification(owner.deviceToken, title, body, profilePic);
                         console.log(title);
                         console.log(body);
                     }
