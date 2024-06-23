@@ -1,0 +1,167 @@
+[
+    {
+        "customerName": "Fateh Dar",
+        "email": "amira20@example.com",
+        "contact": "8645429282",
+        "age": 32,
+        "gender": "Male",
+        "bloodGroup": "B-",
+        "currentBeginDate": "17 Jun 2024",
+        "validTill": 5,
+        "charges": 2697
+    },
+    {
+        "customerName": "Onkar Bhat",
+        "email": "nishithram@example.net",
+        "contact": "2982396913",
+        "age": 38,
+        "gender": "Female",
+        "bloodGroup": "AB+",
+        "currentBeginDate": "21 Jun 2024",
+        "validTill": 3,
+        "charges": 3036
+    },
+    {
+        "customerName": "Yakshit Kaur",
+        "email": "drishya33@example.org",
+        "contact": "0942601067",
+        "age": 31,
+        "gender": "Male",
+        "bloodGroup": "AB-",
+        "currentBeginDate": "21 Jun 2024",
+        "validTill": 2,
+        "charges": 2630
+    },
+    {
+        "customerName": "Ela Borde",
+        "email": "kothariuthkarsh@example.com",
+        "contact": "05160643193",
+        "age": 68,
+        "gender": "Female",
+        "bloodGroup": "B+",
+        "currentBeginDate": "18 Jun 2024",
+        "validTill": 4,
+        "charges": 3511
+    },
+    {
+        "customerName": "Trisha Kadakia",
+        "email": "gokul81@example.org",
+        "contact": "3449933986",
+        "age": 29,
+        "gender": "Female",
+        "bloodGroup": "AB-",
+        "currentBeginDate": "19 Jun 2024",
+        "validTill": 3,
+        "charges": 2373
+    },
+    {
+        "customerName": "Tiya Dalal",
+        "email": "utandon@example.net",
+        "contact": "07923876877",
+        "age": 67,
+        "gender": "Female",
+        "bloodGroup": "A+",
+        "currentBeginDate": "23 Jun 2024",
+        "validTill": 2,
+        "charges": 3653
+    },
+    {
+        "customerName": "Farhan Sunder",
+        "email": "echeema@example.net",
+        "contact": "+913609389530",
+        "age": 24,
+        "gender": "Male",
+        "bloodGroup": "O+",
+        "currentBeginDate": "19 Jun 2024",
+        "validTill": 4,
+        "charges": 2721
+    },
+    {
+        "customerName": "Nirvi Lala",
+        "email": "latashayak@example.com",
+        "contact": "02077404168",
+        "age": 25,
+        "gender": "Female",
+        "bloodGroup": "O+",
+        "currentBeginDate": "21 Jun 2024",
+        "validTill": 1,
+        "charges": 2674
+    },
+    {
+        "customerName": "Biju Lala",
+        "email": "dhruvjaggi@example.com",
+        "contact": "02040217899",
+        "age": 42,
+        "gender": "Male",
+        "bloodGroup": "B-",
+        "currentBeginDate": "22 Jun 2024",
+        "validTill": 3,
+        "charges": 2581
+    },
+    {
+        "customerName": "Madhav Iyer",
+        "email": "ssunder@example.com",
+        "contact": "+910859776553",
+        "age": 40,
+        "gender": "Female",
+        "bloodGroup": "AB+",
+        "currentBeginDate": "21 Jun 2024",
+        "validTill": 1,
+        "charges": 3501
+    },
+    {
+        "customerName": "Miraya Varkey",
+        "email": "ykadakia@example.com",
+        "contact": "03264852005",
+        "age": 58,
+        "gender": "Male",
+        "bloodGroup": "B-",
+        "currentBeginDate": "15 Jun 2024",
+        "validTill": 2,
+        "charges": 4609
+    },
+    {
+        "customerName": "Emir Dugar",
+        "email": "kalearnav@example.com",
+        "contact": "09177608758",
+        "age": 68,
+        "gender": "Female",
+        "bloodGroup": "B+",
+        "currentBeginDate": "20 Jun 2024",
+        "validTill": 1,
+        "charges": 3722
+    },
+    {
+        "customerName": "Mahika Bhatia",
+        "email": "senguptaehsaan@example.com",
+        "contact": "02696634399",
+        "age": 26,
+        "gender": "Female",
+        "bloodGroup": "A-",
+        "currentBeginDate": "20 Jun 2024",
+        "validTill": 5,
+        "charges": 4595
+    },
+    {
+        "customerName": "Gokul Butala",
+        "email": "khushi97@example.org",
+        "contact": "0201787720",
+        "age": 54,
+        "gender": "Female",
+        "bloodGroup": "B+",
+        "currentBeginDate": "17 Jun 2024",
+        "validTill": 5,
+        "charges": 3342
+    },
+    {
+        "customerName": "Shanaya Vaidya",
+        "email": "chakrabartianaya@example.org",
+        "contact": "00307886038",
+        "age": 34,
+        "gender": "Female",
+        "bloodGroup": "B-",
+        "currentBeginDate": "22 Jun 2024",
+        "validTill": 4,
+        "charges": 2265
+    }
+]
