@@ -186,16 +186,18 @@ router.get("/getCustomers", verifyToken, async (req: any, res: Response<GetCusto
 
 router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
   try {
-    const customerId = new mongoose.Types.ObjectId();
     const requestBody: RegisterCustomerRequest = req.body
-    const jwToken: JWToken = req.jwt
-
-    const verifyCustomer = await Customer.find({ contact: requestBody.contact, gymId: jwToken.ownerId });
-
-    if (verifyCustomer.length) {
-      res.status(200).json({ error: 'Customer already exists with that number in this gym' });
+    const doesCustomerExist = await Customer.find({ contact: requestBody.contact })
+    if (doesCustomerExist) {
+      console.log(`This customer already exist with phone number : ${requestBody.contact}`);
+      res.status(409).json({ message: "customer already exist" });
     }
     else {
+
+
+      const customerId = new mongoose.Types.ObjectId();
+
+      const jwToken: JWToken = req.jwt
 
       //omit it later a/q to some algo
       // const trainee = Trainee.find({gymId: jwToken.ownerId}, {name : 1, _id : 0})
@@ -257,11 +259,9 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
         getProfilePic(customer.id)
       ]);
 
-
       res
         .status(200)
         .json({ new_plan: planResult, new_customer: customerResult, profilePic: await getProfilePic(customer.id), attandance: createAttandanceRecord });
-
     }
   } catch (err: any) {
     console.error(err);
