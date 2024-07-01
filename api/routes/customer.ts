@@ -581,9 +581,9 @@ router.get("/details", verifyToken, async (req: any, res: Response<GetCustomerPr
       });
     }
     else {
-      res.status(404).json({
+      res.status(200).json({
         contact: customer.contact,
-        error: "trainer name not found",
+        error: null,
         gymId: null,
         name: customer.name,
         trainerName: null,
