@@ -1046,7 +1046,7 @@ router.post('/workoutAnalysis', verifyToken, async (req: any, res: Response<Work
       growthData: {
         titles: growthTitles,
         data: growthDatas,
-        maxLimitOfData: Math.ceil(Math.max(...growthDatas) * 1.2) != -Infinity ? Math.ceil(Math.max(...growthDatas) * 1.2) : 0,
+        maxLimitOfData: Math.ceil(Math.max(...growthDatas)) != -Infinity ? Math.ceil(Math.max(...growthDatas)) : 0,
         minLimitOfData: Math.floor(Math.min(...growthDatas) * 0.8) != Infinity ? Math.floor(Math.min(...growthDatas) * 0.8) : 0
       },
 
