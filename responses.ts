@@ -135,6 +135,7 @@ export interface ExerciseForDayResponse {
         exerciseName: string;
         sets: {
             setNumber: number;
+            exerciseDescriptionId : mongoose.Schema.Types.ObjectId,
             weight: number;
             reps: number;
         }[];

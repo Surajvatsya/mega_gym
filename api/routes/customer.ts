@@ -188,7 +188,7 @@ router.post("/registerCustomer", verifyToken, async (req: any, res: any) => {
   try {
     const requestBody: RegisterCustomerRequest = req.body
     const doesCustomerExist = await Customer.find({ contact: requestBody.contact })
-    if (doesCustomerExist) {
+    if (doesCustomerExist.length) {
       console.log(`This customer already exist with phone number : ${requestBody.contact}`);
       res.status(409).json({ message: "customer already exist" });
     }

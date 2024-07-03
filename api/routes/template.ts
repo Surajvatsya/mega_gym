@@ -53,7 +53,7 @@ router.post("/addExerciseToTemplate", verifyToken, async (req: any, res: any) =>
                     _id: new mongoose.Types.ObjectId(),
                     exerciseId: req.body.exerciseId,
                     exerciseName: req.body.exerciseName,
-                    setNumber: -1,
+                    setNumber: Date.now(),
                     reps: -1,
                     weight: -1,
                     templateId: template._id,
@@ -74,7 +74,7 @@ router.post("/addExerciseToTemplate", verifyToken, async (req: any, res: any) =>
                 _id: new mongoose.Types.ObjectId(),
                 exerciseId: req.body.exerciseId,
                 exerciseName: req.body.exerciseName,
-                setNumber: -1,
+                setNumber: Date.now(),
                 reps: -1,
                 weight: -1,
                 templateId: newTemplateId,
@@ -165,7 +165,7 @@ router.post("/getExercisesForDay", verifyToken, async (req: any, res: Response<E
                     _id: {
                         day: '$day',
                         exerciseId: '$exercises.exerciseId',
-                        exerciseName: '$exercises.exerciseName'
+                        exerciseName: '$exercises.exerciseName',
                     },
                     sets: {
                         $push: {
@@ -182,7 +182,10 @@ router.post("/getExercisesForDay", verifyToken, async (req: any, res: Response<E
                                     weight: '$exercises.weight',
                                     reps: '$exercises.reps'
                                 },
-                                null
+                                {
+                                    registeredAt: '$exercises.setNumber',
+                                    weightAndreps: null,
+                                }
                             ]
                         }
                     }
@@ -190,14 +193,40 @@ router.post("/getExercisesForDay", verifyToken, async (req: any, res: Response<E
             },
             {
                 $addFields: {
+                    registeredAt: {
+                        $arrayElemAt: [
+                            {
+                                $map: {
+                                    input: '$sets',
+                                    as: 'set',
+                                    in: {
+                                        $cond: [
+                                            { $eq: ['$$set.weightAndreps', null] },
+                                            '$$set.registeredAt',
+                                            null
+                                        ]
+                                    }
+                                }
+                            },
+                            0
+                        ]
+                    },
                     sets: {
                         $filter: {
                             input: '$sets',
                             as: 'set',
-                            cond: { $ne: ['$$set', null] }
+                            cond: { $ne: ['$$set.weightAndreps', null] }
                         }
                     }
                 }
+            },
+            {
+                $addFields: {
+                    '_id.registeredAt': '$registeredAt'
+                }
+            },
+            {
+                $sort: { '_id.registeredAt': 1 }  
             },
             {
                 $group: {
@@ -219,8 +248,8 @@ router.post("/getExercisesForDay", verifyToken, async (req: any, res: Response<E
                 }
             },
             {
-                $sort: { 'exercises.sets.setNumber': 1 }  // Sort the exercises by setNumber
-            }
+                $sort: { 'exercises.sets.setNumber': 1 }  
+            },
         ]);
 
         console.log("exercises", exercises);
