@@ -453,8 +453,8 @@ router.post("/analysis/:key", verifyToken, async (req: any, res: Response<Expand
             const responseObject: ExpandedAnalysisResponse = {
                 titles: keys.map((number) => getMonthFromNumber(number)),
                 data: values,
-                average: (total / keys.length).toString(),
-                total: total.toString(),
+                average: (total / keys.length),
+                total: total,
                 maxLimitOfData: roundToNearest(maxValue),
             };
 
@@ -474,8 +474,8 @@ router.post("/analysis/:key", verifyToken, async (req: any, res: Response<Expand
             const responseObject: ExpandedAnalysisResponse = {
                 titles: keys.map((number) => getMonthFromNumber(number)),
                 data: values,
-                average: (total / keys.length).toString(),
-                total: total.toString(),
+                average: (total / keys.length),
+                total: total,
                 maxLimitOfData: roundToNearest(maxValue),
             };
 
@@ -488,7 +488,7 @@ router.post("/analysis/:key", verifyToken, async (req: any, res: Response<Expand
 });
 
 router.put("/upiId", verifyToken, async (req: any, res) => {
-    const jwtoken: JWToken = req.jwtl
+    const jwtoken: JWToken = req.jwt
     await Owner.findByIdAndUpdate(
         jwtoken.ownerId,
         { upiId: req.body.upiId },

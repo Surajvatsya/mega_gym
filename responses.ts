@@ -35,8 +35,8 @@ export interface AnalysisResponse {
 export interface ExpandedAnalysisResponse {
     titles: string[],
     data: number[],
-    average: String,
-    total: String,
+    average: number,
+    total: number,
     maxLimitOfData: number
 }
 
